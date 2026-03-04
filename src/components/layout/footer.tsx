@@ -12,6 +12,10 @@ const footerLinks = {
     { label: "บทความ", href: "/blog" },
     { label: "ติดต่อ", href: "/contact" },
   ],
+  account: [
+    { label: "เข้าสู่ระบบ", href: "/login" },
+    { label: "สมัครสมาชิก", href: "/register" },
+  ],
   support: [
     { label: "คู่มือการใช้งาน", href: "#" },
     { label: "FAQ", href: "/contact#faq" },
@@ -23,7 +27,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5">
               <Image src="/logo.png" alt="MhorKub" width={32} height={32} className="rounded-lg" />
@@ -55,6 +59,19 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground">บริษัท</h3>
             <ul className="mt-3 space-y-2">
               {footerLinks.company.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-sm text-muted transition-colors hover:text-primary">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">บัญชี</h3>
+            <ul className="mt-3 space-y-2">
+              {footerLinks.account.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-muted transition-colors hover:text-primary">
                     {link.label}

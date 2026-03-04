@@ -31,10 +31,16 @@ export function Header() {
             </Link>
           ))}
           <Link
-            href="/contact"
-            className="ml-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
+            href="/login"
+            className="ml-3 rounded-lg border border-primary/30 px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary/5"
           >
-            ทดลองฟรี
+            เข้าสู่ระบบ
+          </Link>
+          <Link
+            href="/register"
+            className="ml-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
+          >
+            สมัครสมาชิก
           </Link>
         </nav>
 
@@ -65,11 +71,18 @@ export function Header() {
             </Link>
           ))}
           <Link
-            href="/contact"
+            href="/login"
             onClick={() => setOpen(false)}
-            className="mt-2 rounded-lg bg-primary px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark"
+            className="mt-2 rounded-lg border border-primary/30 px-5 py-2.5 text-center text-sm font-medium text-primary transition-all hover:bg-primary/5"
           >
-            ทดลองฟรี
+            เข้าสู่ระบบ
+          </Link>
+          <Link
+            href="/register"
+            onClick={() => setOpen(false)}
+            className="mt-1 rounded-lg bg-primary px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark"
+          >
+            สมัครสมาชิก
           </Link>
         </nav>
       </div>
