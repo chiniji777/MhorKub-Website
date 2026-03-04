@@ -3,7 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, Users, FileText, BarChart3, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  BarChart3,
+  LogOut,
+  ShoppingCart,
+  DollarSign,
+  Share2,
+  Wallet,
+  Bot,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -11,6 +22,12 @@ const NAV_ITEMS = [
   { href: "/admin/leads", label: "Leads", icon: Users },
   { href: "/admin/posts", label: "Blog Posts", icon: FileText },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/revenue", label: "Revenue", icon: DollarSign },
+  { href: "/admin/referrals", label: "Referrals", icon: Share2 },
+  { href: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
+  { href: "/admin/ai-usage", label: "AI Usage", icon: Bot },
 ];
 
 interface SidebarProps {
@@ -35,7 +52,9 @@ export default function AdminSidebar({ user }: SidebarProps) {
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href === "/admin"
+            ? pathname === "/admin"
+            : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

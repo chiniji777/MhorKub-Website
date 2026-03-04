@@ -1,5 +1,114 @@
 import { pgTable, serial, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 
+// ─── Customer / Licensing ───────────────────────────────────────
+
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  email: text("email").unique().notNull(),
+  passwordHash: text("password_hash"),
+  googleId: text("google_id"),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  referralCode: text("referral_code").unique().notNull(),
+  referredBy: integer("referred_by"),
+  creditBalance: integer("credit_balance").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const plans = pgTable("plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  durationDays: integer("duration_days").notNull(),
+  priceThb: integer("price_thb").notNull(),
+  active: boolean("active").default(true).notNull(),
+});
+
+export const licenses = pgTable("licenses", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  planId: integer("plan_id").notNull(),
+  orderId: integer("order_id"),
+  startsAt: timestamp("starts_at").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  status: text("status").default("active").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const deviceActivations = pgTable("device_activations", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  macAddress: text("mac_address").notNull(),
+  deviceName: text("device_name"),
+  lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  planId: integer("plan_id").notNull(),
+  amountThb: integer("amount_thb").notNull(),
+  originalAmount: integer("original_amount").notNull(),
+  referralCode: text("referral_code"),
+  discountPercent: integer("discount_percent").default(0).notNull(),
+  promptpayRef: text("promptpay_ref").notNull(),
+  slipUrl: text("slip_url"),
+  slipVerified: boolean("slip_verified").default(false).notNull(),
+  slipRef: text("slip_ref"),
+  status: text("status").default("pending").notNull(),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const referralTransactions = pgTable("referral_transactions", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrer_id").notNull(),
+  orderId: integer("order_id").notNull(),
+  amountThb: integer("amount_thb").notNull(),
+  credited: boolean("credited").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const withdrawalRequests = pgTable("withdrawal_requests", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  amountThb: integer("amount_thb").notNull(),
+  bankAccount: text("bank_account").notNull(),
+  bankName: text("bank_name").notNull(),
+  status: text("status").default("pending").notNull(),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const aiUsageLogs = pgTable("ai_usage_logs", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  provider: text("provider").notNull(),
+  model: text("model").notNull(),
+  promptTokens: integer("prompt_tokens").notNull(),
+  completionTokens: integer("completion_tokens").notNull(),
+  costSatang: integer("cost_satang").notNull(),
+  chargedSatang: integer("charged_satang").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const aiCreditTopups = pgTable("ai_credit_topups", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  amountThb: integer("amount_thb").notNull(),
+  orderId: integer("order_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const usedSlipRefs = pgTable("used_slip_refs", {
+  id: serial("id").primaryKey(),
+  transRef: text("trans_ref").unique().notNull(),
+  orderId: integer("order_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Marketing Website ──────────────────────────────────────────
+
 export const leads = pgTable("leads", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
