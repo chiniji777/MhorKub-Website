@@ -25,7 +25,7 @@ export function Pricing() {
             <div
               key={tier.name}
               className={cn(
-                "relative rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-1",
+                "relative flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-1",
                 tier.highlighted
                   ? "border-primary bg-white shadow-xl shadow-primary/10 ring-1 ring-primary/20 lg:scale-105"
                   : "border-border/50 bg-white hover:border-primary/20 hover:shadow-lg"
@@ -52,7 +52,7 @@ export function Pricing() {
                 <p className="mt-1 text-xs text-muted">{tier.period}</p>
               )}
 
-              <ul className="mt-6 space-y-2.5">
+              <ul className="mt-6 flex-1 space-y-2.5">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2.5 text-sm text-muted">
                     <Check size={16} className="mt-0.5 shrink-0 text-accent" />
@@ -62,7 +62,7 @@ export function Pricing() {
               </ul>
 
               <Link
-                href={tier.priceNum === 0 ? "/register" : "/register"}
+                href="/register"
                 className={cn(
                   "mt-6 block rounded-xl px-4 py-2.5 text-center text-sm font-semibold transition-all",
                   tier.highlighted
