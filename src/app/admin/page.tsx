@@ -33,7 +33,7 @@ export default async function AdminDashboard() {
   }
 
   const cards = [
-    { label: "Leads ทั้งหมด", value: stats.totalLeads, sub: `${stats.newLeads} ใหม่`, icon: Users, color: "text-blue-600 bg-blue-50" },
+    { label: "Leads ทั้งหมด", value: stats.totalLeads, sub: `${stats.newLeads} ใหม่`, icon: Users, color: "text-cyan-600 bg-cyan-50" },
     { label: "บทความ", value: stats.totalPosts, sub: "posts", icon: FileText, color: "text-green-600 bg-green-50" },
     { label: "Page Views", value: stats.totalViews, sub: "total", icon: Eye, color: "text-purple-600 bg-purple-50" },
     { label: "Conversion", value: stats.totalViews > 0 ? `${((stats.totalLeads / stats.totalViews) * 100).toFixed(1)}%` : "0%", sub: "leads/views", icon: TrendingUp, color: "text-orange-600 bg-orange-50" },

@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { pageViews, leads } from "@/db/schema";
 import { sql, desc } from "drizzle-orm";
 
 async function isAuthed() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-  return session?.value === process.env.ADMIN_SECRET;
+  const session = await auth();
+  return !!session?.user;
 }
 
 export async function GET() {

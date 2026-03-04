@@ -35,7 +35,9 @@ export const pageViews = pgTable("page_views", {
 export const adminUsers = pgTable("admin_users", {
   id: serial("id").primaryKey(),
   email: text("email").unique().notNull(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
   name: text("name").notNull(),
+  googleId: text("google_id"),
+  image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

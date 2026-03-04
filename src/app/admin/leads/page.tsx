@@ -17,7 +17,7 @@ interface Lead {
 
 const STATUS_OPTIONS = ["new", "contacted", "qualified", "closed"];
 const STATUS_COLORS: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
+  new: "bg-cyan-100 text-cyan-700",
   contacted: "bg-yellow-100 text-yellow-700",
   qualified: "bg-green-100 text-green-700",
   closed: "bg-gray-100 text-gray-600",

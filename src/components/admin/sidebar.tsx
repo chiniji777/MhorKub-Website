@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { LayoutDashboard, Users, FileText, BarChart3, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,15 +13,16 @@ const NAV_ITEMS = [
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-export default function AdminSidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
+interface SidebarProps {
+  user: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+}
 
-  async function handleLogout() {
-    await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
-    router.refresh();
-  }
+export default function AdminSidebar({ user }: SidebarProps) {
+  const pathname = usePathname();
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-surface">
@@ -53,8 +55,29 @@ export default function AdminSidebar() {
       </nav>
 
       <div className="border-t border-border p-3">
+        <div className="mb-2 flex items-center gap-2 px-3 py-1">
+          {user.image ? (
+            <img
+              src={user.image}
+              alt=""
+              className="h-7 w-7 rounded-full"
+            />
+          ) : (
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+              {(user.name || user.email || "A").charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-foreground">
+              {user.name || "Admin"}
+            </p>
+            <p className="truncate text-[10px] text-muted">
+              {user.email}
+            </p>
+          </div>
+        </div>
         <button
-          onClick={handleLogout}
+          onClick={() => signOut({ callbackUrl: "/admin/login" })}
           className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-muted transition-colors hover:bg-red-50 hover:text-red-600"
         >
           <LogOut size={18} />

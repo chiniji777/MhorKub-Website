@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import AdminSidebar from "@/components/admin/sidebar";
 
 export const metadata = {
@@ -12,16 +11,14 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-  const isLoggedIn = session?.value === process.env.ADMIN_SECRET;
+  const session = await auth();
+  const isLoggedIn = !!session?.user;
 
-  // Allow login page without auth
   return (
     <div className="min-h-screen bg-background">
       {isLoggedIn ? (
         <div className="flex min-h-screen">
-          <AdminSidebar />
+          <AdminSidebar user={session.user!} />
           <main className="flex-1 overflow-auto">
             <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
               {children}
