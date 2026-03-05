@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 const TOPUP_AMOUNTS = [50, 100, 300, 500, 1000, 5000, 10000];
 
-type Step = "select" | "qr" | "slip" | "done" | "pending_review";
+type Step = "select" | "qr" | "slip" | "done" | "pending_review" | "rejected";
 
 export default function TopupPage() {
   const [step, setStep] = useState<Step>("select");
@@ -34,6 +34,7 @@ export default function TopupPage() {
   const [error, setError] = useState("");
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [debugMsg, setDebugMsg] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -136,6 +137,13 @@ export default function TopupPage() {
 
       if (!res.ok) {
         setError(data.error || "ตรวจสอบสลิปไม่สำเร็จ");
+        return;
+      }
+
+      // Validation failed → show rejection reason
+      if (data.status === "rejected") {
+        setRejectReason(data.message || "สลิปไม่ผ่านการตรวจสอบ");
+        setStep("rejected");
         return;
       }
 
@@ -406,6 +414,38 @@ export default function TopupPage() {
                 className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
               >
                 เติมเครดิตอีกครั้ง
+              </button>
+              <Link
+                href="/dashboard"
+                className="rounded-xl border border-border px-4 py-3 text-sm text-muted hover:bg-background transition-colors"
+              >
+                กลับ Dashboard
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP: Rejected ───────────────────────── */}
+        {step === "rejected" && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center shadow-sm">
+            <AlertCircle size={48} className="mx-auto mb-3 text-red-500" />
+            <h2 className="text-xl font-bold text-foreground">สลิปไม่ผ่านการตรวจสอบ</h2>
+            <p className="mt-3 rounded-lg bg-red-100 px-4 py-3 text-sm text-red-600 inline-block">
+              {rejectReason}
+            </p>
+            <p className="mt-4 text-sm text-muted">
+              กรุณาชำระเงินใหม่และอัปโหลดสลิปที่ถูกต้อง
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setSlipPreview(null);
+                  setRejectReason("");
+                  setStep("qr");
+                }}
+                className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+              >
+                ลองใหม่อีกครั้ง
               </button>
               <Link
                 href="/dashboard"
