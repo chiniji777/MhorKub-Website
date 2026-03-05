@@ -60,8 +60,10 @@ export default function PurchasePage() {
     fetch("/api/v1/plans")
       .then((r) => r.json())
       .then((data) => {
-        // Filter out free plans (trial)
-        setPlans(data.filter((p: Plan) => p.priceThb > 0));
+        // Filter out free plans (trial) and sort by price ascending
+        const paid = data.filter((p: Plan) => p.priceThb > 0);
+        paid.sort((a: Plan, b: Plan) => a.priceThb - b.priceThb);
+        setPlans(paid);
       })
       .catch(() => setError("โหลดแพ็กเกจไม่ได้"))
       .finally(() => setLoadingPlans(false));
@@ -232,32 +234,40 @@ export default function PurchasePage() {
         {step === "plans" && (
           <>
             <div className="mb-6 grid gap-3 sm:grid-cols-3">
-              {plans.map((plan) => (
-                <button
-                  key={plan.id}
-                  onClick={() => setSelectedPlan(plan)}
-                  className={cn(
-                    "rounded-xl border-2 p-5 text-left transition-all",
-                    selectedPlan?.id === plan.id
-                      ? "border-primary bg-primary/5 shadow-md"
-                      : "border-border/50 bg-white hover:border-primary/30 hover:shadow-sm"
-                  )}
-                >
-                  <p className="text-sm font-medium text-muted">{plan.name}</p>
-                  <p className="mt-1 text-xl font-bold text-foreground">
-                    {formatPrice(plan.priceThb)}{" "}
-                    <span className="text-sm font-normal text-muted">
-                      บาท/{periodLabel(plan.durationDays)}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-xs text-muted">
-                    {plan.durationDays} วัน
-                  </p>
-                  {selectedPlan?.id === plan.id && (
-                    <Check className="mt-2 h-5 w-5 text-primary" />
-                  )}
-                </button>
-              ))}
+              {plans.map((plan) => {
+                const isBestSeller = plan.durationDays === 30;
+                return (
+                  <button
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan)}
+                    className={cn(
+                      "relative rounded-xl border-2 p-5 text-left transition-all",
+                      selectedPlan?.id === plan.id
+                        ? "border-primary bg-primary/5 shadow-md"
+                        : "border-border/50 bg-white hover:border-primary/30 hover:shadow-sm"
+                    )}
+                  >
+                    {isBestSeller && (
+                      <span className="absolute -top-2.5 right-3 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                        Best Seller
+                      </span>
+                    )}
+                    <p className="text-sm font-medium text-muted">{plan.name}</p>
+                    <p className="mt-1 text-xl font-bold text-foreground">
+                      {formatPrice(plan.priceThb)}{" "}
+                      <span className="text-sm font-normal text-muted">
+                        บาท/{periodLabel(plan.durationDays)}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      {plan.durationDays} วัน
+                    </p>
+                    {selectedPlan?.id === plan.id && (
+                      <Check className="mt-2 h-5 w-5 text-primary" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Referral Code */}
