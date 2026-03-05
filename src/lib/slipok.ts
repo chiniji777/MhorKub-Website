@@ -1,3 +1,5 @@
+import FormDataNode from "form-data";
+
 const SLIPOK_API_KEY = process.env.SLIPOK_API_KEY || "";
 const SLIPOK_BRANCH_ID = process.env.SLIPOK_BRANCH_ID || "";
 
@@ -30,28 +32,38 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
       mimeType = mimeMatch[1];
     }
 
+    // Map MIME type to file extension
+    const extMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/heic": "heic",
+    };
+    const ext = extMap[mimeType] || "jpg";
+
     console.log("[SlipOK] Verifying slip...", {
       branchId: SLIPOK_BRANCH_ID ? "set" : "MISSING",
       apiKey: SLIPOK_API_KEY ? "set" : "MISSING",
-      apiKeyPrefix: SLIPOK_API_KEY.substring(0, 8) + "...",
       base64Length: base64Data.length,
       mimeType,
     });
 
-    // Convert base64 to File for multipart/form-data upload
-    // Use File (not Blob) for better compatibility with fetch + FormData
+    // Convert base64 to Buffer
     const buffer = Buffer.from(base64Data, "base64");
-    const file = new File([buffer], "slip.jpg", { type: mimeType });
 
-    console.log("[SlipOK] File created:", {
-      name: file.name,
-      size: file.size,
-      type: file.type,
+    console.log("[SlipOK] Buffer created:", {
+      size: buffer.length,
+      mimeType,
+      ext,
     });
 
-    // SlipOK API requires multipart/form-data (NOT JSON)
-    const formData = new FormData();
-    formData.append("files", file);
+    // Use form-data npm package for reliable Node.js multipart upload
+    // Web API FormData + File/Blob doesn't work properly in Node.js serverless
+    const formData = new FormDataNode();
+    formData.append("files", buffer, {
+      filename: `slip.${ext}`,
+      contentType: mimeType,
+    });
 
     const url = "https://api.slipok.com/api/line/apikey/" + SLIPOK_BRANCH_ID;
     console.log("[SlipOK] Sending to:", url);
@@ -60,9 +72,11 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
       method: "POST",
       headers: {
         "x-authorization": SLIPOK_API_KEY,
-        // Do NOT set Content-Type — let FormData set it with boundary
+        ...formData.getHeaders(),
       },
-      body: formData,
+      // form-data getBuffer() returns a proper multipart Buffer
+      // Cast via Uint8Array for TypeScript BodyInit compatibility
+      body: new Uint8Array(formData.getBuffer()),
     });
 
     // Read raw response text first for debugging
