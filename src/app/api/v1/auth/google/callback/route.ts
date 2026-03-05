@@ -164,8 +164,9 @@ h1{font-size:20px;font-weight:700;color:#1e293b;margin-bottom:6px}
 localStorage.setItem('accessToken',${JSON.stringify(accessToken)});
 localStorage.setItem('refreshToken',${JSON.stringify(refreshToken)});
 localStorage.setItem('customer',${JSON.stringify(customerJson)});
-// Auto-close window after Electron picks up the tokens
-setTimeout(function(){ try { window.close(); } catch(e){} }, 1500);
+// Let Electron detect the tokens and close the window (~800ms).
+// This 8s delay is only a safety net in case Electron doesn't close it.
+setTimeout(function(){ try { window.close(); } catch(e){} }, 8000);
 </script>
 </body></html>`;
 }
