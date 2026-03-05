@@ -164,6 +164,8 @@ h1{font-size:20px;font-weight:700;color:#1e293b;margin-bottom:6px}
 localStorage.setItem('accessToken',${JSON.stringify(accessToken)});
 localStorage.setItem('refreshToken',${JSON.stringify(refreshToken)});
 localStorage.setItem('customer',${JSON.stringify(customerJson)});
+// Auto-close window after Electron picks up the tokens
+setTimeout(function(){ try { window.close(); } catch(e){} }, 1500);
 </script>
 </body></html>`;
 }
