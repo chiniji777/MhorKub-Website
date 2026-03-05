@@ -3,18 +3,37 @@ import FormDataNode from "form-data";
 const SLIPOK_API_KEY = process.env.SLIPOK_API_KEY || "";
 const SLIPOK_BRANCH_ID = process.env.SLIPOK_BRANCH_ID || "";
 
+interface SlipProxy {
+  type?: string;
+  value?: string;
+}
+
+interface SlipAccount {
+  type?: string;
+  value?: string;
+}
+
+interface SlipParty {
+  displayName: string;
+  name?: string;
+  proxy?: SlipProxy;
+  account?: SlipAccount;
+}
+
+export interface SlipOKData {
+  transRef: string;
+  amount: number;
+  sendingBank: string;
+  receivingBank: string;
+  transDate: string;
+  transTime: string;
+  sender: SlipParty;
+  receiver: SlipParty;
+}
+
 interface SlipOKResult {
   success: boolean;
-  data?: {
-    transRef: string;
-    amount: number;
-    sendingBank: string;
-    receivingBank: string;
-    transDate: string;
-    transTime: string;
-    sender: { displayName: string };
-    receiver: { displayName: string };
-  };
+  data?: SlipOKData;
   error?: string;
 }
 
@@ -110,6 +129,22 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
     console.log("[SlipOK] Success:", {
       transRef: result.data.transRef,
       amount: result.data.amount,
+      transDate: result.data.transDate,
+      transTime: result.data.transTime,
+      receiver: JSON.stringify(result.data.receiver),
+      sender: JSON.stringify(result.data.sender),
+    });
+
+    // Extract party info with proxy/account details
+    const extractParty = (p: Record<string, unknown>): SlipParty => ({
+      displayName: String(p?.displayName || p?.name || ""),
+      name: p?.name ? String(p.name) : undefined,
+      proxy: p?.proxy && typeof p.proxy === "object"
+        ? { type: (p.proxy as Record<string, string>).type, value: (p.proxy as Record<string, string>).value }
+        : undefined,
+      account: p?.account && typeof p.account === "object"
+        ? { type: (p.account as Record<string, string>).type, value: (p.account as Record<string, string>).value }
+        : undefined,
     });
 
     return {
@@ -121,8 +156,8 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
         receivingBank: result.data.receivingBank,
         transDate: result.data.transDate,
         transTime: result.data.transTime,
-        sender: result.data.sender,
-        receiver: result.data.receiver,
+        sender: extractParty(result.data.sender || {}),
+        receiver: extractParty(result.data.receiver || {}),
       },
     };
   } catch (error) {

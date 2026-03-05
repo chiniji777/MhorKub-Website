@@ -5,6 +5,7 @@ import { orders, usedSlipRefs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { verifySlip } from "@/lib/slipok";
 import { activateOrder } from "@/lib/order-utils";
+import { validateSlipForPayment } from "@/lib/slip-validator";
 
 export async function POST(
   req: NextRequest,
@@ -60,9 +61,14 @@ export async function POST(
       });
     }
 
-    // Check amount matches
-    const expectedAmount = order.amountThb / 100;
-    if (Math.abs(slipResult.data.amount - expectedAmount) > 0.5) {
+    // Comprehensive slip validation (timestamp + receiver + amount)
+    const validation = validateSlipForPayment({
+      slipData: slipResult.data,
+      expectedAmountSatang: order.amountThb,
+      orderCreatedAt: order.createdAt,
+    });
+
+    if (!validation.valid) {
       await db
         .update(orders)
         .set({ status: "pending_review" })
@@ -70,7 +76,8 @@ export async function POST(
 
       return NextResponse.json({
         status: "pending_review",
-        message: "ยอดเงินไม่ตรง — รอ Admin ตรวจสอบ",
+        message: "สลิปไม่ผ่านการตรวจสอบ — รอ Admin ตรวจสอบ",
+        debug: validation.failReason,
       });
     }
 

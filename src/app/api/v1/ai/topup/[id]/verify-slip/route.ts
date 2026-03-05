@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { aiCreditTopups, customers, usedSlipRefs } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { verifySlip } from "@/lib/slipok";
+import { validateSlipForPayment } from "@/lib/slip-validator";
 
 /** Shared logic: credit AI balance after topup approved */
 export async function creditTopup(topupId: number, customerId: number, slipRef?: string) {
@@ -94,9 +95,14 @@ export async function POST(
       });
     }
 
-    // Check amount matches
-    const expectedAmount = topup.amountThb / 100; // satang → THB
-    if (Math.abs(slipResult.data.amount - expectedAmount) > 0.5) {
+    // Comprehensive slip validation (timestamp + receiver + amount)
+    const validation = validateSlipForPayment({
+      slipData: slipResult.data,
+      expectedAmountSatang: topup.amountThb,
+      orderCreatedAt: topup.createdAt,
+    });
+
+    if (!validation.valid) {
       await db
         .update(aiCreditTopups)
         .set({ status: "pending_review" })
@@ -104,7 +110,8 @@ export async function POST(
 
       return NextResponse.json({
         status: "pending_review",
-        message: "ยอดเงินไม่ตรง — รอ Admin ตรวจสอบ",
+        message: "สลิปไม่ผ่านการตรวจสอบ — รอ Admin ตรวจสอบ",
+        debug: validation.failReason,
       });
     }
 

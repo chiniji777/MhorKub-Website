@@ -328,15 +328,33 @@ export default function PurchasePage() {
               </p>
             </div>
 
-            {/* Stripe (Card) */}
+            {/* PromptPay (QR) — Primary */}
+            <button
+              onClick={handlePromptPay}
+              disabled={loading}
+              className="flex w-full items-center gap-4 rounded-xl border-2 border-primary bg-primary/5 p-5 text-left transition-all hover:bg-primary/10 hover:shadow-md disabled:opacity-50"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <QrCode className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">PromptPay QR</p>
+                <p className="text-xs text-muted">
+                  จ่ายครั้งเดียว · สแกน QR แล้วอัปโหลดสลิป
+                </p>
+              </div>
+              {loading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+            </button>
+
+            {/* Stripe (Card) — Secondary */}
             {selectedPlan.stripePriceId && (
               <button
                 onClick={handleStripeCheckout}
                 disabled={loading}
-                className="flex w-full items-center gap-4 rounded-xl border-2 border-primary bg-primary/5 p-5 text-left transition-all hover:bg-primary/10 hover:shadow-md disabled:opacity-50"
+                className="flex w-full items-center gap-4 rounded-xl border-2 border-border/50 bg-white p-5 text-left transition-all hover:border-primary/30 hover:shadow-md disabled:opacity-50"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <CreditCard className="h-6 w-6 text-primary" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
+                  <CreditCard className="h-6 w-6 text-slate-600" />
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-foreground">
@@ -346,31 +364,13 @@ export default function PurchasePage() {
                     ต่ออายุอัตโนมัติ · Visa, MasterCard, JCB
                   </p>
                 </div>
-                <div className="text-xs font-medium text-primary">
+                <div className="text-xs font-medium text-muted">
                   <Sparkles size={14} className="mr-1 inline" />
                   Auto-Renew
                 </div>
-                {loading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+                {loading && <Loader2 className="h-5 w-5 animate-spin text-slate-600" />}
               </button>
             )}
-
-            {/* PromptPay (QR) */}
-            <button
-              onClick={handlePromptPay}
-              disabled={loading}
-              className="flex w-full items-center gap-4 rounded-xl border-2 border-border/50 bg-white p-5 text-left transition-all hover:border-primary/30 hover:shadow-md disabled:opacity-50"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
-                <QrCode className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-foreground">PromptPay QR</p>
-                <p className="text-xs text-muted">
-                  จ่ายครั้งเดียว · สแกน QR แล้วอัปโหลดสลิป
-                </p>
-              </div>
-              {loading && <Loader2 className="h-5 w-5 animate-spin text-green-600" />}
-            </button>
 
             <button
               onClick={() => setStep("plans")}
