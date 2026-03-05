@@ -151,6 +151,12 @@ function LoginForm() {
   }, [handleGoogleCallback]);
 
   function handleGoogleClick() {
+    if (isDesktopPopup) {
+      // Electron desktop app — GIS prompt() doesn't work in BrowserWindow,
+      // use server-side redirect flow instead
+      window.location.href = "/api/v1/auth/google/redirect";
+      return;
+    }
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt();
     }
