@@ -33,6 +33,7 @@ export default function TopupPage() {
   const [loadingBalance, setLoadingBalance] = useState(true);
   const [error, setError] = useState("");
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
+  const [debugMsg, setDebugMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -140,6 +141,7 @@ export default function TopupPage() {
 
       // SlipOK failed → pending admin review
       if (data.status === "pending_review") {
+        setDebugMsg(data.debug || null);
         setStep("pending_review");
         return;
       }
@@ -428,6 +430,11 @@ export default function TopupPage() {
             <p className="mt-3 text-lg font-semibold text-orange-600">
               {selected?.toLocaleString()} บาท
             </p>
+            {debugMsg && (
+              <p className="mt-2 rounded bg-orange-100 px-3 py-2 text-xs text-orange-700 font-mono break-all">
+                Debug: {debugMsg}
+              </p>
+            )}
             <div className="mt-6 flex flex-col gap-2">
               <Link
                 href="/dashboard"

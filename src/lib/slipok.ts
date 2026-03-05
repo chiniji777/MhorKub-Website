@@ -33,19 +33,30 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
     console.log("[SlipOK] Verifying slip...", {
       branchId: SLIPOK_BRANCH_ID ? "set" : "MISSING",
       apiKey: SLIPOK_API_KEY ? "set" : "MISSING",
+      apiKeyPrefix: SLIPOK_API_KEY.substring(0, 8) + "...",
       base64Length: base64Data.length,
       mimeType,
     });
 
-    // Convert base64 to Blob for multipart/form-data upload
+    // Convert base64 to File for multipart/form-data upload
+    // Use File (not Blob) for better compatibility with fetch + FormData
     const buffer = Buffer.from(base64Data, "base64");
-    const blob = new Blob([buffer], { type: mimeType });
+    const file = new File([buffer], "slip.jpg", { type: mimeType });
+
+    console.log("[SlipOK] File created:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    });
 
     // SlipOK API requires multipart/form-data (NOT JSON)
     const formData = new FormData();
-    formData.append("files", blob, "slip.jpg");
+    formData.append("files", file);
 
-    const response = await fetch("https://api.slipok.com/api/line/apikey/" + SLIPOK_BRANCH_ID, {
+    const url = "https://api.slipok.com/api/line/apikey/" + SLIPOK_BRANCH_ID;
+    console.log("[SlipOK] Sending to:", url);
+
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "x-authorization": SLIPOK_API_KEY,
@@ -54,9 +65,19 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
       body: formData,
     });
 
-    const result = await response.json();
+    // Read raw response text first for debugging
+    const rawText = await response.text();
+    console.log("[SlipOK] Raw response:", rawText.substring(0, 500));
 
-    console.log("[SlipOK] Response:", {
+    let result;
+    try {
+      result = JSON.parse(rawText);
+    } catch {
+      console.error("[SlipOK] Failed to parse JSON:", rawText.substring(0, 200));
+      return { success: false, error: `SlipOK returned non-JSON: ${rawText.substring(0, 100)}` };
+    }
+
+    console.log("[SlipOK] Parsed response:", {
       status: response.status,
       ok: response.ok,
       hasData: !!result.data,
@@ -65,8 +86,11 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
     });
 
     if (!response.ok || !result.data) {
-      console.error("[SlipOK] Verification failed:", result);
-      return { success: false, error: result.message || "Slip verification failed" };
+      console.error("[SlipOK] Verification failed:", JSON.stringify(result));
+      return {
+        success: false,
+        error: `SlipOK ${response.status}: ${result.message || result.msg || JSON.stringify(result)}`,
+      };
     }
 
     console.log("[SlipOK] Success:", {
@@ -89,6 +113,9 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
     };
   } catch (error) {
     console.error("[SlipOK] Exception:", error);
-    return { success: false, error: "Failed to connect to SlipOK" };
+    return {
+      success: false,
+      error: `SlipOK exception: ${error instanceof Error ? error.message : String(error)}`,
+    };
   }
 }

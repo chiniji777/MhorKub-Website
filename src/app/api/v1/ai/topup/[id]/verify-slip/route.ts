@@ -90,6 +90,7 @@ export async function POST(
       return NextResponse.json({
         status: "pending_review",
         message: "ส่งสลิปแล้ว รอ Admin ตรวจสอบ",
+        debug: slipResult.error || "unknown error",
       });
     }
 
