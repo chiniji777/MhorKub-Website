@@ -15,7 +15,6 @@ async function seedPlans() {
   const seedData = [
     { name: "Trial", durationDays: 14, priceThb: 0 },
     { name: "Monthly", durationDays: 30, priceThb: 120000 },
-    { name: "90 Days", durationDays: 90, priceThb: 330000 },
     { name: "180 Days", durationDays: 180, priceThb: 600000 },
     { name: "Yearly", durationDays: 365, priceThb: 1000000 },
   ];
