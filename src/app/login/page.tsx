@@ -36,13 +36,12 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = searchParams.get("redirect") || "/dashboard";
 
   // Detect if opened inside Electron BrowserWindow (desktop app popup)
   const isDesktopPopup =
     typeof window !== "undefined" &&
-    (navigator.userAgent.includes("Electron") ||
-      window.opener === null && window.parent === window);
+    navigator.userAgent.includes("Electron");
 
   const handleLoginSuccess = useCallback(
     (data: { accessToken: string; refreshToken: string; customer: { id: number; email: string; name: string; referralCode: string } }) => {
@@ -124,7 +123,7 @@ function LoginForm() {
 
   // Load Google Identity Services
   useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
     if (!clientId) return;
 
     // Check if script already loaded
@@ -138,7 +137,7 @@ function LoginForm() {
         window.google.accounts.id.renderButton(btnEl, {
           theme: "outline",
           size: "large",
-          width: "100%",
+          width: 350,
           text: "signin_with",
           locale: "th",
         });
@@ -161,7 +160,7 @@ function LoginForm() {
           window.google.accounts.id.renderButton(btnEl, {
             theme: "outline",
             size: "large",
-            width: "100%",
+            width: 350,
             text: "signin_with",
             locale: "th",
           });
@@ -262,7 +261,7 @@ function LoginForm() {
           </div>
 
           {/* Google Sign-In */}
-          {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+          {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ? (
             <div id="google-signin-btn" className="flex justify-center" />
           ) : (
             <button

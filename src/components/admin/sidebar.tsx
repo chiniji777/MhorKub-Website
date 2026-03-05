@@ -14,6 +14,7 @@ import {
   Share2,
   Wallet,
   Bot,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/pending-payments", label: "Pending Payments", icon: ClipboardCheck },
   { href: "/admin/revenue", label: "Revenue", icon: DollarSign },
   { href: "/admin/referrals", label: "Referrals", icon: Share2 },
   { href: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },

@@ -53,9 +53,10 @@ export const orders = pgTable("orders", {
   discountPercent: integer("discount_percent").default(0).notNull(),
   promptpayRef: text("promptpay_ref").notNull(),
   slipUrl: text("slip_url"),
+  slipImage: text("slip_image"),               // base64 slip for admin review
   slipVerified: boolean("slip_verified").default(false).notNull(),
   slipRef: text("slip_ref"),
-  status: text("status").default("pending").notNull(),
+  status: text("status").default("pending").notNull(), // pending | pending_review | paid | failed
   paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -96,14 +97,20 @@ export const aiCreditTopups = pgTable("ai_credit_topups", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").notNull(),
   amountThb: integer("amount_thb").notNull(),
-  orderId: integer("order_id"),
+  promptpayRef: text("promptpay_ref").notNull(),
+  slipImage: text("slip_image"),               // base64 slip for admin review
+  slipVerified: boolean("slip_verified").default(false).notNull(),
+  slipRef: text("slip_ref"),
+  status: text("status").default("pending").notNull(), // pending | pending_review | paid | failed
+  paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const usedSlipRefs = pgTable("used_slip_refs", {
   id: serial("id").primaryKey(),
   transRef: text("trans_ref").unique().notNull(),
-  orderId: integer("order_id").notNull(),
+  orderId: integer("order_id"),       // nullable — for subscription orders
+  topupId: integer("topup_id"),       // nullable — for AI credit topups
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCustomer } from "@/lib/customer-auth";
 import { db } from "@/db";
-import { aiCreditTopups, customers } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { aiCreditTopups } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { generatePromptpayQR } from "@/lib/promptpay";
 
+// GET — list my topups
+export async function GET(req: NextRequest) {
+  const auth = await requireCustomer(req);
+  if (auth.error) return auth.error;
+
+  const topups = await db
+    .select()
+    .from(aiCreditTopups)
+    .where(eq(aiCreditTopups.customerId, auth.customer.id))
+    .orderBy(desc(aiCreditTopups.createdAt));
+
+  return NextResponse.json(topups);
+}
+
+// POST — create a new topup (pending) and get QR
 export async function POST(req: NextRequest) {
   const auth = await requireCustomer(req);
   if (auth.error) return auth.error;
@@ -13,24 +28,26 @@ export async function POST(req: NextRequest) {
   try {
     const { amountThb } = await req.json();
 
-    if (!amountThb || amountThb < 100) {
-      return NextResponse.json({ error: "Minimum top-up is 100 satang (1 THB)" }, { status: 400 });
+    if (!amountThb || amountThb < 5000) {
+      return NextResponse.json({ error: "ยอดเติมขั้นต่ำ 50 บาท" }, { status: 400 });
     }
 
-    // Generate QR for top-up
+    // Generate PromptPay QR
     const { qrDataUrl, promptpayRef } = await generatePromptpayQR(amountThb);
 
-    // Record top-up (will be verified separately via slip)
+    // Record topup as pending
     const [topup] = await db
       .insert(aiCreditTopups)
       .values({
         customerId: customer.id,
         amountThb,
+        promptpayRef,
+        status: "pending",
       })
       .returning();
 
     return NextResponse.json({
-      topup: { id: topup.id, amountThb },
+      topup: { id: topup.id, amountThb, status: topup.status },
       qrDataUrl,
       promptpayRef,
       amountDisplay: `${amountThb / 100} THB`,

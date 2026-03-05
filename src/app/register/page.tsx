@@ -26,7 +26,7 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = searchParams.get("redirect") || "/dashboard";
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -77,9 +77,7 @@ function RegisterForm() {
       localStorage.setItem("customer", JSON.stringify(data.customer));
 
       // Check if opened inside Electron BrowserWindow
-      const isDesktopPopup =
-        navigator.userAgent.includes("Electron") ||
-        (window.opener === null && window.parent === window);
+      const isDesktopPopup = navigator.userAgent.includes("Electron");
 
       if (!isDesktopPopup) {
         router.push(redirect);
