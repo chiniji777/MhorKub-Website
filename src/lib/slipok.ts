@@ -18,6 +18,17 @@ interface SlipOKResult {
 
 export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
   try {
+    // Strip data URL prefix if present (e.g. "data:image/jpeg;base64,")
+    const base64Data = slipBase64.includes(",")
+      ? slipBase64.split(",")[1]
+      : slipBase64;
+
+    console.log("[SlipOK] Verifying slip...", {
+      branchId: SLIPOK_BRANCH_ID ? "set" : "MISSING",
+      apiKey: SLIPOK_API_KEY ? "set" : "MISSING",
+      base64Length: base64Data.length,
+    });
+
     const response = await fetch("https://api.slipok.com/api/line/apikey/" + SLIPOK_BRANCH_ID, {
       method: "POST",
       headers: {
@@ -25,15 +36,29 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        files: slipBase64,
+        files: base64Data,
       }),
     });
 
     const result = await response.json();
 
+    console.log("[SlipOK] Response:", {
+      status: response.status,
+      ok: response.ok,
+      hasData: !!result.data,
+      message: result.message,
+      code: result.code,
+    });
+
     if (!response.ok || !result.data) {
+      console.error("[SlipOK] Verification failed:", result);
       return { success: false, error: result.message || "Slip verification failed" };
     }
+
+    console.log("[SlipOK] Success:", {
+      transRef: result.data.transRef,
+      amount: result.data.amount,
+    });
 
     return {
       success: true,
@@ -49,6 +74,7 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
       },
     };
   } catch (error) {
+    console.error("[SlipOK] Exception:", error);
     return { success: false, error: "Failed to connect to SlipOK" };
   }
 }
