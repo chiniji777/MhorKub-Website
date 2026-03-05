@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
         discountPercent: orders.discountPercent,
         referralCode: orders.referralCode,
         status: orders.status,
+        paymentMethod: orders.paymentMethod,
         slipVerified: orders.slipVerified,
         paidAt: orders.paidAt,
         createdAt: orders.createdAt,

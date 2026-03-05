@@ -1,9 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, User, LayoutDashboard } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Menu,
+  X,
+  User,
+  LayoutDashboard,
+  LogOut,
+  Crown,
+  Cpu,
+  ShoppingCart,
+  ChevronDown,
+} from "lucide-react";
 import { NAV_LINKS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +25,15 @@ interface StoredCustomer {
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [customer, setCustomer] = useState<StoredCustomer | null>(null);
+  const [license, setLicense] = useState<{
+    planName: string;
+    daysLeft: number;
+    active: boolean;
+  } | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -25,6 +44,33 @@ export function Header() {
       } catch {
         /* ignore */
       }
+
+      // Fetch license status
+      fetch("/api/v1/license", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.active && data.license) {
+            const days = Math.max(
+              0,
+              Math.ceil(
+                (new Date(data.license.expiresAt).getTime() - Date.now()) /
+                  (1000 * 60 * 60 * 24)
+              )
+            );
+            setLicense({
+              planName: data.license.planName,
+              daysLeft: days,
+              active: true,
+            });
+          } else {
+            setLicense({ planName: "ไม่มีแพ็กเกจ", daysLeft: 0, active: false });
+          }
+        })
+        .catch(() => {
+          /* ignore */
+        });
     }
 
     // Listen for storage changes (login/logout in other tabs)
@@ -40,12 +86,37 @@ export function Header() {
           }
         } else {
           setCustomer(null);
+          setLicense(null);
         }
       }
     }
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleLogout() {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("customer");
+    setCustomer(null);
+    setLicense(null);
+    setDropdownOpen(false);
+    router.push("/login");
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-white/80 backdrop-blur-lg">
@@ -70,16 +141,84 @@ export function Header() {
           ))}
 
           {customer ? (
-            /* Logged-in state */
-            <Link
-              href="/dashboard"
-              className="ml-3 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
-            >
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
-                {customer.name.charAt(0).toUpperCase()}
-              </div>
-              {customer.name.split(" ")[0]}
-            </Link>
+            /* Logged-in state — dropdown */
+            <div className="relative ml-3" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
+                  {customer.name.charAt(0).toUpperCase()}
+                </div>
+                {customer.name.split(" ")[0]}
+                <ChevronDown
+                  size={14}
+                  className={cn(
+                    "transition-transform",
+                    dropdownOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border/50 bg-white py-2 shadow-lg">
+                  {/* Subscription status */}
+                  <div className="border-b border-border/50 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Crown size={14} className="text-primary" />
+                      <span className="text-sm font-semibold text-foreground">
+                        {license?.active
+                          ? license.planName
+                          : "ไม่มีแพ็กเกจ"}
+                      </span>
+                    </div>
+                    {license?.active && (
+                      <p className="mt-0.5 text-xs text-muted">
+                        เหลืออีก {license.daysLeft} วัน
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Menu items */}
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/5"
+                  >
+                    <LayoutDashboard size={16} className="text-muted" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/dashboard/topup"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/5"
+                  >
+                    <Cpu size={16} className="text-muted" />
+                    เติมเครดิต AI
+                  </Link>
+                  <Link
+                    href="/dashboard/purchase"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/5"
+                  >
+                    <ShoppingCart size={16} className="text-muted" />
+                    {license?.active ? "อัพเกรด / ต่ออายุ" : "ซื้อแพ็กเกจ"}
+                  </Link>
+
+                  {/* Logout */}
+                  <div className="border-t border-border/50 mt-1 pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50"
+                    >
+                      <LogOut size={16} />
+                      ออกจากระบบ
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             /* Guest state */
             <>
@@ -130,14 +269,57 @@ export function Header() {
 
           {customer ? (
             /* Mobile logged-in state */
-            <Link
-              href="/dashboard"
-              onClick={() => setOpen(false)}
-              className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark"
-            >
-              <LayoutDashboard size={16} />
-              {customer.name.split(" ")[0]} — Dashboard
-            </Link>
+            <>
+              {/* Subscription status */}
+              {license && (
+                <div className="mt-2 flex items-center gap-2 rounded-lg bg-primary/5 px-4 py-2.5">
+                  <Crown size={14} className="text-primary" />
+                  <span className="text-sm font-semibold text-foreground">
+                    {license.active ? license.planName : "ไม่มีแพ็กเกจ"}
+                  </span>
+                  {license.active && (
+                    <span className="text-xs text-muted">
+                      ({license.daysLeft} วัน)
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <Link
+                href="/dashboard"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5"
+              >
+                <LayoutDashboard size={16} className="text-muted" />
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/topup"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5"
+              >
+                <Cpu size={16} className="text-muted" />
+                เติมเครดิต AI
+              </Link>
+              <Link
+                href="/dashboard/purchase"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5"
+              >
+                <ShoppingCart size={16} className="text-muted" />
+                {license?.active ? "อัพเกรด / ต่ออายุ" : "ซื้อแพ็กเกจ"}
+              </Link>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+              >
+                <LogOut size={16} />
+                ออกจากระบบ
+              </button>
+            </>
           ) : (
             /* Mobile guest state */
             <>

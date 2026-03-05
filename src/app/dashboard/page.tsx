@@ -13,14 +13,21 @@ import {
   Cpu,
   ArrowLeft,
   Loader2,
+  RefreshCw,
+  CreditCard,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
 
 interface License {
   id: number;
   planName: string;
+  planId: number;
   startsAt: string;
   expiresAt: string;
   status: string;
+  autoRenew: boolean;
+  stripeSubscriptionId: string | null;
 }
 
 interface MeResponse {
@@ -37,7 +44,20 @@ export default function CustomerDashboard() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Handle payment callback from URL params
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (payment === "success") {
+      setSuccessMsg("ชำระเงินสำเร็จ! ระบบกำลังเปิดใช้งานให้คุณค่ะ");
+      window.history.replaceState({}, "", "/dashboard");
+      setTimeout(() => setSuccessMsg(null), 6000);
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -75,6 +95,26 @@ export default function CustomerDashboard() {
     navigator.clipboard.writeText(me.referralCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function openStripePortal() {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setPortalLoading(false);
+    }
   }
 
   if (loading) {
@@ -117,6 +157,14 @@ export default function CustomerDashboard() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-8">
+        {/* Success Message */}
+        {successMsg && (
+          <div className="mb-6 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <CheckCircle size={18} />
+            {successMsg}
+          </div>
+        )}
+
         {/* Welcome */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground">
@@ -134,9 +182,17 @@ export default function CustomerDashboard() {
             </div>
             {me.license && me.license.status === "active" ? (
               <>
-                <p className="text-2xl font-bold text-primary">
-                  {me.license.planName}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold text-primary">
+                    {me.license.planName}
+                  </p>
+                  {me.license.autoRenew && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <RefreshCw size={10} />
+                      ต่ออายุอัตโนมัติ
+                    </span>
+                  )}
+                </div>
                 <p className="mt-1 text-sm text-muted">
                   เหลืออีก{" "}
                   <span className="font-semibold text-foreground">
@@ -151,6 +207,39 @@ export default function CustomerDashboard() {
                     day: "numeric",
                   })}
                 </p>
+
+                {/* Cancellation warning */}
+                {me.license.stripeSubscriptionId && !me.license.autoRenew && (
+                  <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+                    <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                    <span>กำลังยกเลิก — จะไม่ต่ออายุอัตโนมัติเมื่อหมดรอบ</span>
+                  </div>
+                )}
+
+                {/* Manage subscription button */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {me.license.stripeSubscriptionId && (
+                    <button
+                      onClick={openStripePortal}
+                      disabled={portalLoading}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted hover:bg-background transition-colors disabled:opacity-50"
+                    >
+                      {portalLoading ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <CreditCard size={14} />
+                      )}
+                      จัดการ Subscription
+                    </button>
+                  )}
+                  <Link
+                    href="/dashboard/purchase"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-dark transition-colors"
+                  >
+                    <ShoppingCart size={14} />
+                    อัพเกรด / ต่ออายุ
+                  </Link>
+                </div>
               </>
             ) : (
               <>
@@ -159,7 +248,7 @@ export default function CustomerDashboard() {
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Link
-                    href="/pricing"
+                    href="/dashboard/purchase"
                     className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark transition-colors"
                   >
                     <ShoppingCart size={14} className="mr-1 inline" />

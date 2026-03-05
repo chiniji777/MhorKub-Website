@@ -11,10 +11,13 @@ export async function GET(req: NextRequest) {
   const [activeLicense] = await db
     .select({
       id: licenses.id,
+      planId: licenses.planId,
       planName: plans.name,
       startsAt: licenses.startsAt,
       expiresAt: licenses.expiresAt,
       status: licenses.status,
+      autoRenew: licenses.autoRenew,
+      stripeSubscriptionId: licenses.stripeSubscriptionId,
     })
     .from(licenses)
     .innerJoin(plans, eq(plans.id, licenses.planId))

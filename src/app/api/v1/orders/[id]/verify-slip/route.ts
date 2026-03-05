@@ -1,69 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCustomer } from "@/lib/customer-auth";
 import { db } from "@/db";
-import { orders, licenses, plans, customers, referralTransactions, usedSlipRefs } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { orders, usedSlipRefs } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { verifySlip } from "@/lib/slipok";
-
-/** Shared logic: activate license + handle referral cashback */
-export async function activateOrder(orderId: number, customerId: number, slipRef?: string) {
-  // Update order to paid
-  await db
-    .update(orders)
-    .set({
-      status: "paid",
-      slipVerified: true,
-      slipRef: slipRef || "admin-approved",
-      paidAt: new Date(),
-    })
-    .where(eq(orders.id, orderId));
-
-  // Get order + plan
-  const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
-  const [plan] = await db.select().from(plans).where(eq(plans.id, order.planId));
-
-  // Create license
-  const startsAt = new Date();
-  const expiresAt = new Date(startsAt.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
-
-  const [license] = await db
-    .insert(licenses)
-    .values({
-      customerId,
-      planId: order.planId,
-      orderId: order.id,
-      startsAt,
-      expiresAt,
-      status: "active",
-    })
-    .returning();
-
-  // Handle referral cashback
-  if (order.referralCode) {
-    const [referrer] = await db
-      .select({ id: customers.id })
-      .from(customers)
-      .where(eq(customers.referralCode, order.referralCode));
-
-    if (referrer) {
-      const cashbackAmount = Math.round(order.amountThb * 0.1);
-
-      await db.insert(referralTransactions).values({
-        referrerId: referrer.id,
-        orderId: order.id,
-        amountThb: cashbackAmount,
-        credited: true,
-      });
-
-      await db
-        .update(customers)
-        .set({ creditBalance: sql`${customers.creditBalance} + ${cashbackAmount}` })
-        .where(eq(customers.id, referrer.id));
-    }
-  }
-
-  return license;
-}
+import { activateOrder } from "@/lib/order-utils";
 
 export async function POST(
   req: NextRequest,

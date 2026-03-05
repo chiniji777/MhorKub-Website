@@ -12,6 +12,7 @@ export const customers = pgTable("customers", {
   referralCode: text("referral_code").unique().notNull(),
   referredBy: integer("referred_by"),
   creditBalance: integer("credit_balance").default(0).notNull(),
+  stripeCustomerId: text("stripe_customer_id").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -21,6 +22,7 @@ export const plans = pgTable("plans", {
   durationDays: integer("duration_days").notNull(),
   priceThb: integer("price_thb").notNull(),
   active: boolean("active").default(true).notNull(),
+  stripePriceId: text("stripe_price_id"),
 });
 
 export const licenses = pgTable("licenses", {
@@ -31,6 +33,8 @@ export const licenses = pgTable("licenses", {
   startsAt: timestamp("starts_at").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   status: text("status").default("active").notNull(),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  autoRenew: boolean("auto_renew").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -51,11 +55,15 @@ export const orders = pgTable("orders", {
   originalAmount: integer("original_amount").notNull(),
   referralCode: text("referral_code"),
   discountPercent: integer("discount_percent").default(0).notNull(),
-  promptpayRef: text("promptpay_ref").notNull(),
+  promptpayRef: text("promptpay_ref"),          // nullable — null for Stripe orders
   slipUrl: text("slip_url"),
   slipImage: text("slip_image"),               // base64 slip for admin review
   slipVerified: boolean("slip_verified").default(false).notNull(),
   slipRef: text("slip_ref"),
+  paymentMethod: text("payment_method").default("promptpay").notNull(), // "promptpay" | "stripe"
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeInvoiceId: text("stripe_invoice_id"),
   status: text("status").default("pending").notNull(), // pending | pending_review | paid | failed
   paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

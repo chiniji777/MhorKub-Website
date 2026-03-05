@@ -1,0 +1,505 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Crown,
+  CreditCard,
+  QrCode,
+  Loader2,
+  Check,
+  Upload,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Sparkles,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface Plan {
+  id: number;
+  name: string;
+  durationDays: number;
+  priceThb: number;
+  stripePriceId: string | null;
+}
+
+type Step = "plans" | "payment" | "qr" | "slip" | "done" | "pending_review";
+
+export default function PurchasePage() {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [step, setStep] = useState<Step>("plans");
+  const [referralCode, setReferralCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [error, setError] = useState("");
+  // PromptPay state
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<number | null>(null);
+  const [slipPreview, setSlipPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
+  useEffect(() => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    // Check for cancelled payment
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "cancelled") {
+      setError("การชำระเงินถูกยกเลิก");
+    }
+
+    fetch("/api/v1/plans")
+      .then((r) => r.json())
+      .then((data) => {
+        // Filter out free plans (trial)
+        setPlans(data.filter((p: Plan) => p.priceThb > 0));
+      })
+      .catch(() => setError("โหลดแพ็กเกจไม่ได้"))
+      .finally(() => setLoadingPlans(false));
+  }, [router, token]);
+
+  // ─── Stripe Checkout ───────────────────────────────────────────
+
+  async function handleStripeCheckout() {
+    if (!selectedPlan || !token) return;
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          planId: selectedPlan.id,
+          referralCode: referralCode || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.checkoutUrl;
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+      setLoading(false);
+    }
+  }
+
+  // ─── PromptPay Flow ────────────────────────────────────────────
+
+  async function handlePromptPay() {
+    if (!selectedPlan || !token) return;
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          planId: selectedPlan.id,
+          referralCode: referralCode || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setQrDataUrl(data.qrDataUrl);
+      setOrderId(data.order.id);
+      setStep("qr");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleSlipSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSlipPreview(reader.result as string);
+      setStep("slip");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSlipSubmit() {
+    if (!slipPreview || !orderId || !token) return;
+    setVerifying(true);
+    setError("");
+
+    try {
+      const res = await fetch(`/api/v1/orders/${orderId}/verify-slip`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ slipImage: slipPreview }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      if (data.status === "pending_review") {
+        setStep("pending_review");
+      } else {
+        setStep("done");
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "ตรวจสอบสลิปล้มเหลว");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  // ─── Price Helpers ─────────────────────────────────────────────
+
+  function formatPrice(satang: number) {
+    return (satang / 100).toLocaleString("th-TH");
+  }
+
+  function discountedPrice(plan: Plan) {
+    if (!referralCode) return plan.priceThb;
+    return Math.round(plan.priceThb * 0.9);
+  }
+
+  function periodLabel(days: number) {
+    if (days <= 30) return "เดือน";
+    if (days <= 180) return "6 เดือน";
+    return "ปี";
+  }
+
+  // ─── Loading ───────────────────────────────────────────────────
+
+  if (loadingPlans) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-white">
+      {/* Header */}
+      <header className="border-b border-border/50 bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <ArrowLeft size={16} className="text-muted" />
+            <span className="text-lg font-bold text-primary">MhorKub</span>
+          </Link>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <h1 className="mb-2 text-2xl font-bold text-foreground">
+          <Crown className="mr-2 inline h-6 w-6 text-primary" />
+          ซื้อแพ็กเกจ
+        </h1>
+        <p className="mb-6 text-sm text-muted">
+          เลือกแพ็กเกจและช่องทางชำระเงินที่สะดวก
+        </p>
+
+        {error && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+
+        {/* ─── Step 1: Select Plan ─── */}
+        {step === "plans" && (
+          <>
+            <div className="mb-6 grid gap-3 sm:grid-cols-3">
+              {plans.map((plan) => (
+                <button
+                  key={plan.id}
+                  onClick={() => setSelectedPlan(plan)}
+                  className={cn(
+                    "rounded-xl border-2 p-5 text-left transition-all",
+                    selectedPlan?.id === plan.id
+                      ? "border-primary bg-primary/5 shadow-md"
+                      : "border-border/50 bg-white hover:border-primary/30 hover:shadow-sm"
+                  )}
+                >
+                  <p className="text-sm font-medium text-muted">{plan.name}</p>
+                  <p className="mt-1 text-xl font-bold text-foreground">
+                    {formatPrice(plan.priceThb)}{" "}
+                    <span className="text-sm font-normal text-muted">
+                      บาท/{periodLabel(plan.durationDays)}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {plan.durationDays} วัน
+                  </p>
+                  {selectedPlan?.id === plan.id && (
+                    <Check className="mt-2 h-5 w-5 text-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Referral Code */}
+            <div className="mb-6">
+              <label className="mb-1 block text-sm font-medium text-foreground">
+                รหัสแนะนำ (ถ้ามี)
+              </label>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                placeholder="เช่น MHK-ABC123"
+                className="w-full rounded-lg border border-border px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
+              />
+              {referralCode && (
+                <p className="mt-1 text-xs text-accent">
+                  ✨ ลด 10% เมื่อใช้รหัสแนะนำ
+                </p>
+              )}
+            </div>
+
+            {selectedPlan && (
+              <div className="space-y-3">
+                {/* Price summary */}
+                <div className="rounded-xl border border-border/50 bg-white p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted">แพ็กเกจ</span>
+                    <span className="font-medium">{selectedPlan.name}</span>
+                  </div>
+                  {referralCode && (
+                    <div className="mt-1 flex items-center justify-between text-sm">
+                      <span className="text-muted">ส่วนลด 10%</span>
+                      <span className="text-accent">
+                        -{formatPrice(selectedPlan.priceThb - discountedPrice(selectedPlan))} บาท
+                      </span>
+                    </div>
+                  )}
+                  <div className="mt-2 flex items-center justify-between border-t pt-2">
+                    <span className="font-semibold">ยอดชำระ</span>
+                    <span className="text-lg font-bold text-primary">
+                      {formatPrice(discountedPrice(selectedPlan))} บาท
+                    </span>
+                  </div>
+                </div>
+
+                {/* Payment method buttons */}
+                <button
+                  onClick={() => setStep("payment")}
+                  className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
+                >
+                  เลือกช่องทางชำระเงิน
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ─── Step 1.5: Choose Payment Method ─── */}
+        {step === "payment" && selectedPlan && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border/50 bg-white p-4">
+              <p className="mb-1 text-sm text-muted">แพ็กเกจที่เลือก</p>
+              <p className="text-lg font-bold text-foreground">
+                {selectedPlan.name} —{" "}
+                <span className="text-primary">
+                  {formatPrice(discountedPrice(selectedPlan))} บาท
+                </span>
+              </p>
+            </div>
+
+            {/* Stripe (Card) */}
+            {selectedPlan.stripePriceId && (
+              <button
+                onClick={handleStripeCheckout}
+                disabled={loading}
+                className="flex w-full items-center gap-4 rounded-xl border-2 border-primary bg-primary/5 p-5 text-left transition-all hover:bg-primary/10 hover:shadow-md disabled:opacity-50"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <CreditCard className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground">
+                    บัตรเครดิต / เดบิต
+                  </p>
+                  <p className="text-xs text-muted">
+                    ต่ออายุอัตโนมัติ · Visa, MasterCard, JCB
+                  </p>
+                </div>
+                <div className="text-xs font-medium text-primary">
+                  <Sparkles size={14} className="mr-1 inline" />
+                  Auto-Renew
+                </div>
+                {loading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+              </button>
+            )}
+
+            {/* PromptPay (QR) */}
+            <button
+              onClick={handlePromptPay}
+              disabled={loading}
+              className="flex w-full items-center gap-4 rounded-xl border-2 border-border/50 bg-white p-5 text-left transition-all hover:border-primary/30 hover:shadow-md disabled:opacity-50"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
+                <QrCode className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">PromptPay QR</p>
+                <p className="text-xs text-muted">
+                  จ่ายครั้งเดียว · สแกน QR แล้วอัปโหลดสลิป
+                </p>
+              </div>
+              {loading && <Loader2 className="h-5 w-5 animate-spin text-green-600" />}
+            </button>
+
+            <button
+              onClick={() => setStep("plans")}
+              className="w-full text-center text-sm text-muted hover:text-foreground"
+            >
+              ← เปลี่ยนแพ็กเกจ
+            </button>
+          </div>
+        )}
+
+        {/* ─── Step 2: PromptPay QR ─── */}
+        {step === "qr" && qrDataUrl && (
+          <div className="text-center">
+            <div className="mx-auto mb-4 inline-block rounded-2xl border border-border/50 bg-white p-6 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrDataUrl}
+                alt="PromptPay QR"
+                className="mx-auto h-64 w-64"
+              />
+            </div>
+            <p className="mb-1 text-lg font-bold text-foreground">
+              สแกน QR เพื่อชำระ{" "}
+              <span className="text-primary">
+                {selectedPlan ? formatPrice(discountedPrice(selectedPlan)) : "—"} บาท
+              </span>
+            </p>
+            <p className="mb-6 text-sm text-muted">
+              ชำระเงินแล้ว กรุณาอัปโหลดสลิป
+            </p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleSlipSelect}
+            />
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark"
+            >
+              <Upload size={16} className="mr-2 inline" />
+              อัปโหลดสลิป
+            </button>
+          </div>
+        )}
+
+        {/* ─── Step 3: Confirm Slip ─── */}
+        {step === "slip" && slipPreview && (
+          <div className="text-center">
+            <div className="mx-auto mb-4 inline-block overflow-hidden rounded-2xl border border-border/50 bg-white shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={slipPreview}
+                alt="Slip preview"
+                className="max-h-80 object-contain"
+              />
+            </div>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => {
+                  setSlipPreview(null);
+                  setStep("qr");
+                }}
+                className="rounded-lg border border-border px-5 py-2.5 text-sm text-muted hover:bg-background"
+              >
+                เลือกใหม่
+              </button>
+              <button
+                onClick={handleSlipSubmit}
+                disabled={verifying}
+                className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+              >
+                {verifying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    กำลังตรวจสอบ...
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    ยืนยันการชำระเงิน
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Done ─── */}
+        {step === "done" && (
+          <div className="text-center py-12">
+            <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-500" />
+            <h2 className="text-xl font-bold text-foreground">
+              ชำระเงินสำเร็จ!
+            </h2>
+            <p className="mt-2 text-sm text-muted">
+              สิทธิ์ใช้งานถูกเปิดใช้งานแล้ว
+            </p>
+            <Link
+              href="/dashboard"
+              className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+            >
+              กลับหน้า Dashboard
+            </Link>
+          </div>
+        )}
+
+        {/* ─── Pending Review ─── */}
+        {step === "pending_review" && (
+          <div className="text-center py-12">
+            <Clock className="mx-auto mb-4 h-16 w-16 text-amber-500" />
+            <h2 className="text-xl font-bold text-foreground">
+              รอตรวจสอบ
+            </h2>
+            <p className="mt-2 text-sm text-muted">
+              ส่งสลิปแล้ว กรุณารอ Admin ตรวจสอบ (ปกติไม่เกิน 30 นาที)
+            </p>
+            <Link
+              href="/dashboard"
+              className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+            >
+              กลับหน้า Dashboard
+            </Link>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

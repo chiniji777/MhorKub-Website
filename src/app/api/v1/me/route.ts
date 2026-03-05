@@ -33,9 +33,12 @@ export async function GET(req: NextRequest) {
     license: activeLicense
       ? {
           id: activeLicense.id,
+          planId: activeLicense.planId,
           startsAt: activeLicense.startsAt,
           expiresAt: activeLicense.expiresAt,
           status: activeLicense.status,
+          autoRenew: activeLicense.autoRenew,
+          stripeSubscriptionId: activeLicense.stripeSubscriptionId,
         }
       : null,
   });

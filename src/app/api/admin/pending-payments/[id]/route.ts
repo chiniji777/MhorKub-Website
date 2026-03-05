@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { orders, aiCreditTopups, customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { activateOrder } from "@/app/api/v1/orders/[id]/verify-slip/route";
+import { activateOrder } from "@/lib/order-utils";
 import { creditTopup } from "@/app/api/v1/ai/topup/[id]/verify-slip/route";
 
 async function isAuthed() {

@@ -40,6 +40,17 @@ export async function GET() {
       })
       .from(aiUsageLogs);
 
+    // Revenue by payment method
+    const revenueByMethod = await db
+      .select({
+        paymentMethod: orders.paymentMethod,
+        total: sql<number>`coalesce(sum(${orders.amountThb}), 0)`,
+        count: sql<number>`count(*)`,
+      })
+      .from(orders)
+      .where(eq(orders.status, "paid"))
+      .groupBy(orders.paymentMethod);
+
     // Revenue by day (last 30 days)
     const revenueByDay = await db
       .select({
@@ -63,6 +74,7 @@ export async function GET() {
         totalCost: aiRevenue.totalCost,
         profit: aiRevenue.totalCharged - aiRevenue.totalCost,
       },
+      revenueByMethod,
       revenueByDay,
     });
   } catch {
