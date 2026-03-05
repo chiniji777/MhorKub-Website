@@ -122,6 +122,18 @@ export const usedSlipRefs = pgTable("used_slip_refs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ─── Notifications ──────────────────────────────────────────────
+
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  type: text("type").notNull(), // referral_signup | referral_purchase | withdrawal_approved | withdrawal_rejected
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ─── Marketing Website ──────────────────────────────────────────
 
 export const leads = pgTable("leads", {

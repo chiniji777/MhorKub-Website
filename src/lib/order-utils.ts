@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { orders, licenses, plans, customers, referralTransactions } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { createNotification } from "@/lib/notifications";
 
 interface CreateLicenseOptions {
   stripeSubscriptionId?: string;
@@ -70,6 +71,15 @@ export async function processReferralCashback(orderId: number) {
     .update(customers)
     .set({ creditBalance: sql`${customers.creditBalance} + ${cashbackAmount}` })
     .where(eq(customers.id, referrer.id));
+
+  // Notify referrer about cashback
+  const cashbackDisplay = (cashbackAmount / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+  createNotification(
+    referrer.id,
+    "referral_purchase",
+    "ได้รับเงินคืนจากการแนะนำ!",
+    `คุณได้รับเงินคืน ฿${cashbackDisplay} จากการซื้อของคนที่คุณแนะนำ`
+  ).catch(() => {});
 
   return { referrerId: referrer.id, cashbackAmount };
 }

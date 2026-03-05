@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { signCustomerToken, signRefreshToken, generateReferralCode } from "@/lib/customer-auth";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,6 +49,16 @@ export async function POST(req: NextRequest) {
         referredBy,
       })
       .returning();
+
+    // Notify referrer about new signup
+    if (referredBy) {
+      createNotification(
+        referredBy,
+        "referral_signup",
+        "มีคนใช้รหัสแนะนำของคุณ!",
+        `${customer.name} สมัครสมาชิกผ่านรหัสแนะนำของคุณ เมื่อเขาซื้อแพ็กเกจ คุณจะได้รับเงินคืน 10%`
+      ).catch(() => {});
+    }
 
     const accessToken = await signCustomerToken(customer.id);
     const refreshToken = await signRefreshToken(customer.id);

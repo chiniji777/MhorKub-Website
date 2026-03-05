@@ -103,15 +103,9 @@ export async function POST(
     });
 
     if (!validation.valid) {
-      await db
-        .update(aiCreditTopups)
-        .set({ status: "pending_review" })
-        .where(eq(aiCreditTopups.id, topup.id));
-
       return NextResponse.json({
-        status: "pending_review",
-        message: "สลิปไม่ผ่านการตรวจสอบ — รอ Admin ตรวจสอบ",
-        debug: validation.failReason,
+        status: "rejected",
+        message: validation.failReason,
       });
     }
 
@@ -122,7 +116,10 @@ export async function POST(
       .where(eq(usedSlipRefs.transRef, slipResult.data.transRef));
 
     if (usedSlip) {
-      return NextResponse.json({ error: "สลิปนี้ถูกใช้ไปแล้ว" }, { status: 400 });
+      return NextResponse.json({
+        status: "rejected",
+        message: "สลิปนี้ถูกใช้ไปแล้ว กรุณาชำระเงินใหม่",
+      });
     }
 
     // Mark slip as used

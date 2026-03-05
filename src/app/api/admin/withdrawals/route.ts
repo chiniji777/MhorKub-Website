@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { withdrawalRequests, customers } from "@/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
+import { createNotification } from "@/lib/notifications";
 
 async function isAuthed() {
   const session = await auth();
@@ -71,6 +72,24 @@ export async function PUT(req: NextRequest) {
       .set({ status, processedAt: new Date() })
       .where(eq(withdrawalRequests.id, id))
       .returning();
+
+    // Send notification to customer
+    const amountDisplay = (updated.amountThb / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+    if (status === "approved") {
+      createNotification(
+        updated.customerId,
+        "withdrawal_approved",
+        "คำขอถอนเงินได้รับการอนุมัติ",
+        `คำขอถอนเงิน ฿${amountDisplay} ได้รับการอนุมัติแล้วค่ะ`
+      ).catch(() => {});
+    } else if (status === "rejected") {
+      createNotification(
+        updated.customerId,
+        "withdrawal_rejected",
+        "คำขอถอนเงินถูกปฏิเสธ",
+        `คำขอถอนเงิน ฿${amountDisplay} ถูกปฏิเสธ เงินได้คืนเข้ายอดเครดิตแล้วค่ะ`
+      ).catch(() => {});
+    }
 
     return NextResponse.json(updated);
   } catch {

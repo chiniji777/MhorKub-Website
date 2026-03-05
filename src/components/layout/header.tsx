@@ -14,6 +14,7 @@ import {
   Cpu,
   ShoppingCart,
   ChevronDown,
+  Bell,
 } from "lucide-react";
 import { NAV_LINKS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export function Header() {
     daysLeft: number;
     active: boolean;
   } | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -71,6 +73,18 @@ export function Header() {
         .catch(() => {
           /* ignore */
         });
+
+      // Fetch notification unread count
+      fetch("/api/v1/notifications", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          setUnreadCount(data.unreadCount || 0);
+        })
+        .catch(() => {
+          /* ignore */
+        });
     }
 
     // Listen for storage changes (login/logout in other tabs)
@@ -87,6 +101,7 @@ export function Header() {
         } else {
           setCustomer(null);
           setLicense(null);
+          setUnreadCount(0);
         }
       }
     }
@@ -114,6 +129,7 @@ export function Header() {
     localStorage.removeItem("customer");
     setCustomer(null);
     setLicense(null);
+    setUnreadCount(0);
     setDropdownOpen(false);
     router.push("/login");
   }
@@ -141,8 +157,21 @@ export function Header() {
           ))}
 
           {customer ? (
-            /* Logged-in state — dropdown */
-            <div className="relative ml-3" ref={dropdownRef}>
+            /* Logged-in state — bell + dropdown */
+            <>
+              <Link
+                href="/dashboard/notifications"
+                className="relative ml-3 rounded-lg p-2 text-muted transition-colors hover:bg-primary/5 hover:text-primary"
+                aria-label="แจ้งเตือน"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Link>
+            <div className="relative ml-1" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md"
@@ -190,6 +219,21 @@ export function Header() {
                     Dashboard
                   </Link>
                   <Link
+                    href="/dashboard/notifications"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center justify-between px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/5"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Bell size={16} className="text-muted" />
+                      แจ้งเตือน
+                    </span>
+                    {unreadCount > 0 && (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
                     href="/dashboard/topup"
                     onClick={() => setDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/5"
@@ -219,6 +263,7 @@ export function Header() {
                 </div>
               )}
             </div>
+            </>
           ) : (
             /* Guest state */
             <>
@@ -292,6 +337,21 @@ export function Header() {
               >
                 <LayoutDashboard size={16} className="text-muted" />
                 Dashboard
+              </Link>
+              <Link
+                href="/dashboard/notifications"
+                onClick={() => setOpen(false)}
+                className="flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Bell size={16} className="text-muted" />
+                  แจ้งเตือน
+                </span>
+                {unreadCount > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
               <Link
                 href="/dashboard/topup"

@@ -26,7 +26,7 @@ interface Plan {
   stripePriceId: string | null;
 }
 
-type Step = "plans" | "payment" | "qr" | "slip" | "done" | "pending_review";
+type Step = "plans" | "payment" | "qr" | "slip" | "done" | "pending_review" | "rejected";
 
 export default function PurchasePage() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -41,6 +41,7 @@ export default function PurchasePage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<number | null>(null);
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -163,7 +164,10 @@ export default function PurchasePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      if (data.status === "pending_review") {
+      if (data.status === "rejected") {
+        setRejectReason(data.message || "สลิปไม่ผ่านการตรวจสอบ");
+        setStep("rejected");
+      } else if (data.status === "pending_review") {
         setStep("pending_review");
       } else {
         setStep("done");
@@ -488,6 +492,32 @@ export default function PurchasePage() {
             >
               กลับหน้า Dashboard
             </Link>
+          </div>
+        )}
+
+        {/* ─── Rejected ─── */}
+        {step === "rejected" && (
+          <div className="text-center py-12">
+            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-red-500" />
+            <h2 className="text-xl font-bold text-foreground">
+              สลิปไม่ผ่านการตรวจสอบ
+            </h2>
+            <p className="mt-2 text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3 inline-block">
+              {rejectReason}
+            </p>
+            <p className="mt-4 text-sm text-muted">
+              กรุณาชำระเงินใหม่และอัปโหลดสลิปที่ถูกต้อง
+            </p>
+            <button
+              onClick={() => {
+                setSlipPreview(null);
+                setRejectReason("");
+                setStep("qr");
+              }}
+              className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+            >
+              ลองใหม่อีกครั้ง
+            </button>
           </div>
         )}
 
