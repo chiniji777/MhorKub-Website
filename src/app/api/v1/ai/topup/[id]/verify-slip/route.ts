@@ -135,7 +135,9 @@ export async function POST(
       newBalance: result.newBalance,
       newBalanceDisplay: `${result.newBalance / 100} บาท`,
     });
-  } catch {
-    return NextResponse.json({ error: "ตรวจสอบสลิปล้มเหลว" }, { status: 500 });
+  } catch (err) {
+    console.error("[verify-slip] Exception:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `ตรวจสอบสลิปล้มเหลว: ${msg}` }, { status: 500 });
   }
 }
