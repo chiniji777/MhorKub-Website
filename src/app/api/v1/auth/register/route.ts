@@ -12,17 +12,17 @@ export async function POST(req: NextRequest) {
     const { email, password, name, phone, referralCode } = body;
 
     if (!email || !password || !name) {
-      return NextResponse.json({ error: "Email, password, and name are required" }, { status: 400 });
+      return NextResponse.json({ error: "กรุณากรอกอีเมล รหัสผ่าน และชื่อให้ครบ" }, { status: 400 });
     }
 
     if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+      return NextResponse.json({ error: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร" }, { status: 400 });
     }
 
     // Check existing
     const [existing] = await db.select().from(customers).where(eq(customers.email, email));
     if (existing) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+      return NextResponse.json({ error: "อีเมลนี้ถูกใช้งานแล้ว กรุณาเข้าสู่ระบบแทน" }, { status: 409 });
     }
 
     // Resolve referrer
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     }, { status: 201 });
   } catch (err) {
     console.error("Registration error:", err);
-    const message = err instanceof Error ? err.message : "Registration failed";
+    const message = err instanceof Error ? err.message : "สมัครสมาชิกไม่สำเร็จ";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
