@@ -56,6 +56,7 @@ export async function POST(
       return NextResponse.json({
         status: "pending_review",
         message: "ส่งสลิปแล้ว รอ Admin ตรวจสอบ",
+        debug: slipResult.error || "unknown error",
       });
     }
 
@@ -102,7 +103,9 @@ export async function POST(
         status: license.status,
       },
     });
-  } catch {
-    return NextResponse.json({ error: "ตรวจสอบสลิปล้มเหลว" }, { status: 500 });
+  } catch (err) {
+    console.error("[orders/verify-slip] Exception:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `ตรวจสอบสลิปล้มเหลว: ${msg}` }, { status: 500 });
   }
 }
