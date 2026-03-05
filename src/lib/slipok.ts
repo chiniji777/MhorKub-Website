@@ -23,21 +23,35 @@ export async function verifySlip(slipBase64: string): Promise<SlipOKResult> {
       ? slipBase64.split(",")[1]
       : slipBase64;
 
+    // Detect MIME type from data URL or default to image/jpeg
+    let mimeType = "image/jpeg";
+    const mimeMatch = slipBase64.match(/^data:([^;]+);base64,/);
+    if (mimeMatch) {
+      mimeType = mimeMatch[1];
+    }
+
     console.log("[SlipOK] Verifying slip...", {
       branchId: SLIPOK_BRANCH_ID ? "set" : "MISSING",
       apiKey: SLIPOK_API_KEY ? "set" : "MISSING",
       base64Length: base64Data.length,
+      mimeType,
     });
+
+    // Convert base64 to Blob for multipart/form-data upload
+    const buffer = Buffer.from(base64Data, "base64");
+    const blob = new Blob([buffer], { type: mimeType });
+
+    // SlipOK API requires multipart/form-data (NOT JSON)
+    const formData = new FormData();
+    formData.append("files", blob, "slip.jpg");
 
     const response = await fetch("https://api.slipok.com/api/line/apikey/" + SLIPOK_BRANCH_ID, {
       method: "POST",
       headers: {
         "x-authorization": SLIPOK_API_KEY,
-        "Content-Type": "application/json",
+        // Do NOT set Content-Type — let FormData set it with boundary
       },
-      body: JSON.stringify({
-        files: base64Data,
-      }),
+      body: formData,
     });
 
     const result = await response.json();
