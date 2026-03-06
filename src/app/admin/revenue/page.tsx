@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { StatCard } from "@/components/admin/stat-card";
 
 interface RevenueData {
   totalRevenue: number;
@@ -17,8 +18,9 @@ export default function RevenuePage() {
 
   useEffect(() => {
     fetch("/api/admin/revenue")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); });
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d) => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="py-8 text-center text-muted-foreground">Loading...</div>;
@@ -69,11 +71,3 @@ export default function RevenuePage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border p-4">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-bold">{value}</div>
-    </div>
-  );
-}

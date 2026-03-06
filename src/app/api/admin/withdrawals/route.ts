@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { db } from "@/db";
 import { withdrawalRequests, customers } from "@/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
@@ -47,26 +47,30 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    // If rejected, refund the credit
-    if (status === "rejected") {
-      const [withdrawal] = await db
-        .select()
-        .from(withdrawalRequests)
-        .where(eq(withdrawalRequests.id, id));
-
-      if (withdrawal && withdrawal.status === "pending") {
-        await db
-          .update(customers)
-          .set({ creditBalance: sql`${customers.creditBalance} + ${withdrawal.amountThb}` })
-          .where(eq(customers.id, withdrawal.customerId));
-      }
-    }
-
+    // Atomically claim the withdrawal by checking current status
     const [updated] = await db
       .update(withdrawalRequests)
       .set({ status, processedAt: new Date() })
-      .where(eq(withdrawalRequests.id, id))
+      .where(and(
+        eq(withdrawalRequests.id, id),
+        // Only allow transitions from pending
+        status === "rejected" || status === "approved"
+          ? eq(withdrawalRequests.status, "pending")
+          : eq(withdrawalRequests.status, "approved") // completed only from approved
+      ))
       .returning();
+
+    if (!updated) {
+      return NextResponse.json({ error: "Withdrawal not found or already processed" }, { status: 400 });
+    }
+
+    // If rejected, refund the credit (safe because we atomically changed status above)
+    if (status === "rejected") {
+      await db
+        .update(customers)
+        .set({ creditBalance: sql`${customers.creditBalance} + ${updated.amountThb}` })
+        .where(eq(customers.id, updated.customerId));
+    }
 
     // Send notification to customer
     const amountDisplay = (updated.amountThb / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 });

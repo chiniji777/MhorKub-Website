@@ -51,6 +51,7 @@ export default function PendingPaymentsPage() {
     const params = new URLSearchParams();
     if (filter) params.set("type", filter);
     const res = await fetch(`/api/admin/pending-payments?${params}`);
+    if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
     setItems(data.items || []);
     setLoading(false);

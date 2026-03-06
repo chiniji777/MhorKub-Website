@@ -124,24 +124,26 @@ export default function AdminAnalyticsPage() {
             {data.viewsByDay.length === 0 ? (
               <p className="text-sm text-muted">ยังไม่มีข้อมูล</p>
             ) : (
-              data.viewsByDay.slice(0, 14).map((day, i) => {
+              (() => {
                 const maxCount = Math.max(...data.viewsByDay.map((d) => Number(d.count)));
-                const pct = maxCount > 0 ? (Number(day.count) / maxCount) * 100 : 0;
-                return (
-                  <div key={i} className="flex items-center gap-3 text-sm">
-                    <span className="w-24 shrink-0 text-xs text-muted">{day.date}</span>
-                    <div className="flex-1">
-                      <div className="h-5 rounded bg-primary/10">
-                        <div
-                          className="h-5 rounded bg-primary/40"
-                          style={{ width: `${pct}%` }}
-                        />
+                return data.viewsByDay.slice(0, 14).map((day, i) => {
+                  const pct = maxCount > 0 ? (Number(day.count) / maxCount) * 100 : 0;
+                  return (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      <span className="w-24 shrink-0 text-xs text-muted">{day.date}</span>
+                      <div className="flex-1">
+                        <div className="h-5 rounded bg-primary/10">
+                          <div
+                            className="h-5 rounded bg-primary/40"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
+                      <span className="w-10 text-right text-xs font-semibold text-foreground">{day.count}</span>
                     </div>
-                    <span className="w-10 text-right text-xs font-semibold text-foreground">{day.count}</span>
-                  </div>
-                );
-              })
+                  );
+                });
+              })()
             )}
           </div>
         </div>

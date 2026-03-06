@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { db } from "@/db";
 import { orders, aiCreditTopups, customers } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or, and } from "drizzle-orm";
 import { activateOrder } from "@/lib/order-utils";
 import { creditTopup } from "@/app/api/v1/ai/topup/[id]/verify-slip/route";
 
@@ -92,13 +92,21 @@ export async function POST(
   try {
     // --- APPROVE ORDER ---
     if (type === "order" && action === "approve") {
-      const [order] = await db.select().from(orders).where(eq(orders.id, itemId));
-      if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
-      if (order.status !== "pending_review" && order.status !== "pending") {
-        return NextResponse.json({ error: "Order already processed" }, { status: 400 });
+      // Atomically claim the order to prevent double-approve race condition
+      const [claimed] = await db
+        .update(orders)
+        .set({ status: "processing" })
+        .where(and(
+          eq(orders.id, itemId),
+          or(eq(orders.status, "pending_review"), eq(orders.status, "pending"))
+        ))
+        .returning();
+
+      if (!claimed) {
+        return NextResponse.json({ error: "Order not found or already processed" }, { status: 400 });
       }
 
-      const license = await activateOrder(order.id, order.customerId, "admin-approved");
+      const license = await activateOrder(claimed.id, claimed.customerId, "admin-approved");
 
       return NextResponse.json({
         message: "Order approved — License activated",
@@ -108,13 +116,21 @@ export async function POST(
 
     // --- APPROVE TOPUP ---
     if (type === "topup" && action === "approve") {
-      const [topup] = await db.select().from(aiCreditTopups).where(eq(aiCreditTopups.id, itemId));
-      if (!topup) return NextResponse.json({ error: "Not found" }, { status: 404 });
-      if (topup.status !== "pending_review" && topup.status !== "pending") {
-        return NextResponse.json({ error: "Topup already processed" }, { status: 400 });
+      // Atomically claim the topup to prevent double-approve race condition
+      const [claimed] = await db
+        .update(aiCreditTopups)
+        .set({ status: "processing" })
+        .where(and(
+          eq(aiCreditTopups.id, itemId),
+          or(eq(aiCreditTopups.status, "pending_review"), eq(aiCreditTopups.status, "pending"))
+        ))
+        .returning();
+
+      if (!claimed) {
+        return NextResponse.json({ error: "Topup not found or already processed" }, { status: 400 });
       }
 
-      const result = await creditTopup(topup.id, topup.customerId, "admin-approved");
+      const result = await creditTopup(claimed.id, claimed.customerId, "admin-approved");
 
       return NextResponse.json({
         message: "Topup approved — Credit added",
@@ -126,9 +142,19 @@ export async function POST(
     // --- REJECT ---
     if (action === "reject") {
       if (type === "order") {
-        await db.update(orders).set({ status: "failed" }).where(eq(orders.id, itemId));
+        const [rejected] = await db
+          .update(orders)
+          .set({ status: "failed" })
+          .where(eq(orders.id, itemId))
+          .returning();
+        if (!rejected) return NextResponse.json({ error: "Not found" }, { status: 404 });
       } else if (type === "topup") {
-        await db.update(aiCreditTopups).set({ status: "failed" }).where(eq(aiCreditTopups.id, itemId));
+        const [rejected] = await db
+          .update(aiCreditTopups)
+          .set({ status: "failed" })
+          .where(eq(aiCreditTopups.id, itemId))
+          .returning();
+        if (!rejected) return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
       return NextResponse.json({ message: "Rejected" });
     }

@@ -30,17 +30,22 @@ export default function WithdrawalsPage() {
   async function fetchData() {
     setLoading(true);
     const res = await fetch("/api/admin/withdrawals");
+    if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
     setWithdrawals(data);
     setLoading(false);
   }
 
   async function updateStatus(id: number, status: string) {
-    await fetch("/api/admin/withdrawals", {
+    const res = await fetch("/api/admin/withdrawals", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.error || "Action failed");
+    }
     fetchData();
   }
 

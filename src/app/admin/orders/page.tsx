@@ -39,6 +39,7 @@ export default function OrdersPage() {
     const params = new URLSearchParams({ page: String(page) });
     if (filter) params.set("status", filter);
     const res = await fetch(`/api/admin/orders?${params}`);
+    if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
     setOrders(data.orders);
     setTotalPages(data.totalPages);
