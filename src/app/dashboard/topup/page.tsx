@@ -61,13 +61,20 @@ export default function TopupPage() {
       .finally(() => setLoadingBalance(false));
   }, [router]);
 
+  // Auto-redirect to dashboard after success
+  useEffect(() => {
+    if (step !== "done") return;
+    const timer = setTimeout(() => router.push("/dashboard"), 3000);
+    return () => clearTimeout(timer);
+  }, [step, router]);
+
   // Poll for mobile slip upload
   useEffect(() => {
     if (!slipUploadToken || (step !== "qr" && step !== "slip")) return;
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/v1/slip/status?token=${slipUploadToken}`);
+        const res = await fetch(`/api/v1/slip/status?token=${slipUploadToken}&_t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
 
@@ -476,7 +483,8 @@ export default function TopupPage() {
                 <span className="text-base font-normal text-muted">บาท</span>
               </p>
             )}
-            <div className="mt-6 flex flex-col gap-2">
+            <p className="mt-4 text-xs text-muted">กำลังกลับหน้า Dashboard อัตโนมัติ...</p>
+            <div className="mt-4 flex flex-col gap-2">
               <button
                 onClick={resetFlow}
                 className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"

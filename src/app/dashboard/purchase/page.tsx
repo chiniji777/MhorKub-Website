@@ -193,6 +193,13 @@ export default function PurchasePage() {
     }
   }
 
+  // Auto-redirect to dashboard after success
+  useEffect(() => {
+    if (step !== "done") return;
+    const timer = setTimeout(() => router.push("/dashboard"), 3000);
+    return () => clearTimeout(timer);
+  }, [step, router]);
+
   // ─── Poll for mobile slip upload ──────────────────────────────
 
   useEffect(() => {
@@ -201,7 +208,7 @@ export default function PurchasePage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/v1/slip/status?token=${slipUploadToken}`);
+        const res = await fetch(`/api/v1/slip/status?token=${slipUploadToken}&_t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
         if (data.uploaded) {
@@ -549,9 +556,10 @@ export default function PurchasePage() {
             <p className="mt-2 text-sm text-muted">
               สิทธิ์ใช้งานถูกเปิดใช้งานแล้ว
             </p>
+            <p className="mt-4 text-xs text-muted">กำลังกลับหน้า Dashboard อัตโนมัติ...</p>
             <Link
               href="/dashboard"
-              className="mt-6 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
+              className="mt-4 inline-block rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-dark"
             >
               กลับหน้า Dashboard
             </Link>
