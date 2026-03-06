@@ -490,7 +490,7 @@ export default function PurchasePage() {
                   />
                 </div>
                 <p className="mt-2 text-xs text-muted">
-                  สแกน QR นี้ด้วยมือถือเพื่อถ่ายรูป/อัปโหลดสลิป
+                  สแกน QR นี้ด้วยมือถือ → แนบสลิปส่งได้เลย
                 </p>
               </div>
             )}

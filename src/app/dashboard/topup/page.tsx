@@ -369,7 +369,7 @@ export default function TopupPage() {
                     หรือ สแกนอัปโหลดสลิปจากมือถือ
                   </div>
                   <p className="text-xs text-muted text-center mb-3">
-                    สแกน QR นี้ด้วยมือถือ → ถ่ายรูปสลิปส่งได้เลย
+                    สแกน QR นี้ด้วยมือถือ → แนบสลิปส่งได้เลย
                   </p>
                   <div className="mx-auto w-fit rounded-lg bg-gray-50 p-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
