@@ -153,9 +153,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-white/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/logo.png" alt="MhorKub" width={36} height={36} className="rounded-lg" />
-          <span className="text-xl font-bold text-foreground">
+        <Link href="/" className="flex flex-col items-center gap-0.5">
+          <Image src="/logo.png" alt="MhorKub" width={32} height={32} className="rounded-lg" />
+          <span className="text-[10px] font-bold leading-none text-foreground">
             Mhor<span className="text-primary">Kub</span>
           </span>
         </Link>

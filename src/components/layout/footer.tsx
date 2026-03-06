@@ -30,8 +30,8 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Image src="/logo.png" alt="MhorKub" width={32} height={32} className="rounded-lg" />
+            <Link href="/" className="flex flex-col items-start gap-1">
+              <Image src="/logo.png" alt="MhorKub" width={36} height={36} className="rounded-lg" />
               <span className="text-lg font-bold text-foreground">
                 Mhor<span className="text-primary">Kub</span>
               </span>

@@ -19,6 +19,7 @@ import {
   Users,
   Wallet,
   ArrowRight,
+  LogOut,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -302,6 +303,20 @@ export default function DashboardOverview() {
             <ShoppingCart size={14} />
             เติมเครดิต
           </Link>
+          <div className="mt-4 border-t border-border/50 pt-4">
+            <button
+              onClick={() => {
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
+                localStorage.removeItem("customer");
+                router.push("/login");
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <LogOut size={14} />
+              ออกจากระบบ
+            </button>
+          </div>
         </div>
 
         {/* Referral Card */}
