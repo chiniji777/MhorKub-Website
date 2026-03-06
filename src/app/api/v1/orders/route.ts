@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { orders, plans, customers } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { generatePromptpayQR } from "@/lib/promptpay";
+import { signSlipUploadToken } from "@/lib/slip-token";
 
 export async function GET(req: NextRequest) {
   const auth = await requireCustomer(req);
@@ -68,6 +69,14 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    // Generate slip upload token for mobile QR
+    const slipUploadToken = await signSlipUploadToken({
+      id: order.id,
+      type: "order",
+      customerId: customer.id,
+      amountThb: order.amountThb,
+    });
+
     return NextResponse.json({
       order: {
         id: order.id,
@@ -77,6 +86,7 @@ export async function POST(req: NextRequest) {
         status: order.status,
       },
       qrDataUrl,
+      slipUploadToken,
       amountDisplay: `${amountThb / 100} THB`,
     }, { status: 201 });
   } catch {

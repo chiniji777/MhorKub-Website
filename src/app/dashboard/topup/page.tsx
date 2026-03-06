@@ -14,7 +14,9 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
+  Smartphone,
 } from "lucide-react";
+import QRCodeLib from "qrcode";
 import { cn } from "@/lib/utils";
 
 const TOPUP_AMOUNTS = [50, 100, 300, 500, 1000, 5000, 10000];
@@ -35,6 +37,8 @@ export default function TopupPage() {
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [debugMsg, setDebugMsg] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [slipUploadToken, setSlipUploadToken] = useState<string | null>(null);
+  const [slipUploadQr, setSlipUploadQr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -56,6 +60,36 @@ export default function TopupPage() {
       .catch(() => router.push("/login"))
       .finally(() => setLoadingBalance(false));
   }, [router]);
+
+  // Poll for mobile slip upload
+  useEffect(() => {
+    if (!slipUploadToken || (step !== "qr" && step !== "slip")) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/v1/slip/status?token=${slipUploadToken}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.uploaded) {
+          clearInterval(interval);
+          if (data.status === "paid") {
+            setNewBalance(data.newBalance ?? null);
+            setStep("done");
+          } else if (data.status === "pending_review") {
+            setStep("pending_review");
+          } else if (data.status === "rejected") {
+            setRejectReason(data.message || "สลิปไม่ผ่านการตรวจสอบ");
+            setStep("rejected");
+          }
+        }
+      } catch {
+        // polling error, ignore
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [slipUploadToken, step]);
 
   function getToken() {
     const token = localStorage.getItem("accessToken");
@@ -94,6 +128,20 @@ export default function TopupPage() {
 
       setQrDataUrl(data.qrDataUrl);
       setTopupId(data.topup.id);
+
+      // Generate mobile slip upload QR
+      if (data.slipUploadToken) {
+        setSlipUploadToken(data.slipUploadToken);
+        const base = window.location.origin;
+        const uploadUrl = `${base}/slip/${data.slipUploadToken}`;
+        try {
+          const qr = await QRCodeLib.toDataURL(uploadUrl, { width: 200, margin: 2 });
+          setSlipUploadQr(qr);
+        } catch {
+          // QR generation failed, non-critical
+        }
+      }
+
       setStep("qr");
     } catch {
       setError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
@@ -170,6 +218,8 @@ export default function TopupPage() {
     setQrDataUrl(null);
     setTopupId(null);
     setSlipPreview(null);
+    setSlipUploadToken(null);
+    setSlipUploadQr(null);
     setError("");
     if (newBalance !== null) setBalance(newBalance);
     setNewBalance(null);
@@ -308,8 +358,26 @@ export default function TopupPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90"
               >
                 <Upload size={16} />
-                โอนแล้ว → ส่งสลิป
+                อัปโหลดสลิปจากเครื่องนี้
               </button>
+
+              {/* Mobile slip upload QR */}
+              {slipUploadQr && (
+                <div className="mt-4 rounded-xl border border-border/50 bg-white p-4">
+                  <div className="flex items-center justify-center gap-2 text-sm font-medium text-foreground mb-2">
+                    <Smartphone size={16} className="text-accent" />
+                    หรือ สแกนอัปโหลดสลิปจากมือถือ
+                  </div>
+                  <p className="text-xs text-muted text-center mb-3">
+                    สแกน QR นี้ด้วยมือถือ → ถ่ายรูปสลิปส่งได้เลย
+                  </p>
+                  <div className="mx-auto w-fit rounded-lg bg-gray-50 p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={slipUploadQr} alt="Slip Upload QR" className="h-40 w-40" />
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={resetFlow}
                 className="rounded-lg px-4 py-2 text-sm text-muted hover:bg-background transition-colors"

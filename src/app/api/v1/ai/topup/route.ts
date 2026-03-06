@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { aiCreditTopups } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { generatePromptpayQR } from "@/lib/promptpay";
+import { signSlipUploadToken } from "@/lib/slip-token";
 
 // GET — list my topups
 export async function GET(req: NextRequest) {
@@ -46,9 +47,18 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    // Generate slip upload token for mobile QR
+    const slipUploadToken = await signSlipUploadToken({
+      id: topup.id,
+      type: "topup",
+      customerId: customer.id,
+      amountThb: topup.amountThb,
+    });
+
     return NextResponse.json({
       topup: { id: topup.id, amountThb, status: topup.status },
       qrDataUrl,
+      slipUploadToken,
       promptpayRef,
       amountDisplay: `${amountThb / 100} THB`,
     }, { status: 201 });

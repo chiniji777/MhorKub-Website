@@ -15,7 +15,9 @@ import {
   AlertCircle,
   Clock,
   Sparkles,
+  Smartphone,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { cn } from "@/lib/utils";
 
 interface Plan {
@@ -42,6 +44,8 @@ export default function PurchasePage() {
   const [orderId, setOrderId] = useState<number | null>(null);
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [slipUploadToken, setSlipUploadToken] = useState<string | null>(null);
+  const [slipUploadQr, setSlipUploadQr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -126,6 +130,16 @@ export default function PurchasePage() {
 
       setQrDataUrl(data.qrDataUrl);
       setOrderId(data.order.id);
+
+      // Generate mobile slip upload QR
+      if (data.slipUploadToken) {
+        setSlipUploadToken(data.slipUploadToken);
+        const base = window.location.origin;
+        const uploadUrl = `${base}/slip/${data.slipUploadToken}`;
+        const qr = await QRCode.toDataURL(uploadUrl, { width: 200, margin: 1 });
+        setSlipUploadQr(qr);
+      }
+
       setStep("qr");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
@@ -178,6 +192,32 @@ export default function PurchasePage() {
       setVerifying(false);
     }
   }
+
+  // ─── Poll for mobile slip upload ──────────────────────────────
+
+  useEffect(() => {
+    if (!slipUploadToken) return;
+    if (step !== "qr" && step !== "slip") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/v1/slip/status?token=${slipUploadToken}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.uploaded) {
+          clearInterval(interval);
+          if (data.status === "paid") setStep("done");
+          else if (data.status === "pending_review") setStep("pending_review");
+          else if (data.status === "rejected") {
+            setRejectReason(data.message || "สลิปไม่ผ่าน");
+            setStep("rejected");
+          }
+        }
+      } catch { /* ignore polling errors */ }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [slipUploadToken, step]);
 
   // ─── Price Helpers ─────────────────────────────────────────────
 
@@ -429,8 +469,31 @@ export default function PurchasePage() {
               className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark"
             >
               <Upload size={16} className="mr-2 inline" />
-              อัปโหลดสลิป
+              อัปโหลดสลิปจากเครื่องนี้
             </button>
+
+            {/* Mobile Slip Upload QR */}
+            {slipUploadQr && (
+              <div className="mt-6 border-t border-border/30 pt-6">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Smartphone size={16} className="text-emerald-500" />
+                  <p className="text-sm font-medium text-foreground">
+                    หรือ อัปโหลดสลิปจากมือถือ
+                  </p>
+                </div>
+                <div className="mx-auto inline-block rounded-xl border border-border/50 bg-white p-3 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={slipUploadQr}
+                    alt="Scan to upload slip"
+                    className="h-40 w-40"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted">
+                  สแกน QR นี้ด้วยมือถือเพื่อถ่ายรูป/อัปโหลดสลิป
+                </p>
+              </div>
+            )}
           </div>
         )}
 
