@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: "MhorKub — ระบบบริหารคลินิกอัจฉริยะ",
   description: "ระบบบริหารคลินิกครบวงจร จัดการคนไข้ คิว ใบสั่งยา สต็อก บิล พร้อม AI ช่วยวินิจฉัย — ใช้งานได้ทั้งออนไลน์และออฟไลน์",
   keywords: ["คลินิก", "ระบบคลินิก", "clinic management", "MhorKub", "มหรคุณ"],
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

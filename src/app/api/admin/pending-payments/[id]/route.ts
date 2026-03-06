@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { isAdmin } from "@/lib/auth";
 import { db } from "@/db";
 import { orders, aiCreditTopups, customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { activateOrder } from "@/lib/order-utils";
 import { creditTopup } from "@/app/api/v1/ai/topup/[id]/verify-slip/route";
 
-async function isAuthed() {
-  const session = await auth();
-  return !!session?.user;
-}
-
 // GET — view slip image for a specific pending payment
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await isAuthed())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -82,7 +77,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await isAuthed())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

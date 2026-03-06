@@ -6,8 +6,9 @@ import { eq } from "drizzle-orm";
 
 // Temporary seed endpoint — remove after use
 export async function POST(req: NextRequest) {
+  // Only allow in development or with correct secret
   const secret = req.headers.get("x-seed-secret");
-  if (secret !== process.env.SEED_SECRET && secret !== "mhorkub-seed-2026") {
+  if (secret !== process.env.SEED_SECRET) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

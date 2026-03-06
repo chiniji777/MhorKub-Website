@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/db";
 import { leads, posts, pageViews } from "@/db/schema";
 import { sql, eq } from "drizzle-orm";
@@ -8,11 +7,7 @@ import { Users, FileText, Eye, TrendingUp } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
-  if (session?.value !== process.env.ADMIN_SECRET) {
-    redirect("/admin/login");
-  }
+  await requireAdmin();
 
   let stats = { totalLeads: 0, newLeads: 0, totalPosts: 0, totalViews: 0 };
 

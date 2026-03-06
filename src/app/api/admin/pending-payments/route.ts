@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { isAdmin } from "@/lib/auth";
 import { db } from "@/db";
 import { orders, aiCreditTopups, customers, plans } from "@/db/schema";
 import { eq, desc, or } from "drizzle-orm";
 
-async function isAuthed() {
-  const session = await auth();
-  return !!session?.user;
-}
-
 export async function GET(req: NextRequest) {
-  if (!(await isAuthed())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

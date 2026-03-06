@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { isAdmin } from "@/lib/auth";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 
-async function isAuthed() {
-  const session = await auth();
-  return !!session?.user;
-}
-
 export async function GET() {
-  if (!(await isAuthed())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -27,7 +22,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!(await isAuthed())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -59,7 +54,7 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  if (!(await isAuthed())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -93,7 +88,7 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!(await isAuthed())) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
