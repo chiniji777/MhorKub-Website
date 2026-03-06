@@ -24,6 +24,29 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     apple: "/apple-icon.png",
   },
+  openGraph: {
+    title: "MhorKub — ระบบบริหารคลินิกอัจฉริยะ",
+    description: "ระบบบริหารคลินิกครบวงจร จัดการคนไข้ คิว ใบสั่งยา สต็อก บิล พร้อม AI ช่วยวินิจฉัย — ใช้งานได้ทั้งออนไลน์และออฟไลน์",
+    url: "https://mhorkub.com",
+    siteName: "MhorKub",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "MhorKub — ระบบบริหารคลินิกอัจฉริยะ",
+      },
+    ],
+    locale: "th_TH",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MhorKub — ระบบบริหารคลินิกอัจฉริยะ",
+    description: "ระบบบริหารคลินิกครบวงจร จัดการคนไข้ คิว ใบสั่งยา สต็อก บิล พร้อม AI ช่วยวินิจฉัย",
+    images: ["/og-image.png"],
+  },
+  metadataBase: new URL("https://mhorkub.com"),
 };
 
 export default function RootLayout({

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Facebook } from "lucide-react";
 
 const footerLinks = {
   product: [
@@ -19,7 +20,7 @@ const footerLinks = {
   support: [
     { label: "คู่มือการใช้งาน", href: "#" },
     { label: "FAQ", href: "/contact#faq" },
-    { label: "LINE @mhorkub", href: "#" },
+    { label: "LINE @mhorkub", href: "https://line.me/R/ti/p/@mhorkub" },
   ],
 };
 
@@ -40,6 +41,17 @@ export function Footer() {
               <br />
               ใช้งานง่าย ครบจบในที่เดียว
             </p>
+            <div className="mt-4 flex items-center gap-3">
+              <a
+                href="https://facebook.com/mhorkub"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/10 text-muted transition-colors hover:bg-primary/10 hover:text-primary"
+                aria-label="Facebook"
+              >
+                <Facebook className="h-4 w-4" />
+              </a>
+            </div>
           </div>
 
           <div>
