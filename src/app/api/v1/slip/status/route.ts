@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySlipUploadToken } from "@/lib/slip-token";
 import { db } from "@/db";
-import { orders, aiCreditTopups, licenses } from "@/db/schema";
+import { orders, aiCreditTopups, licenses, customers } from "@/db/schema";
 import { eq, and, gte } from "drizzle-orm";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
@@ -51,7 +53,9 @@ export async function GET(req: NextRequest) {
       result.message = "ส่งสลิปแล้ว รอ Admin ตรวจสอบ";
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+    });
   } else {
     const [topup] = await db.select().from(aiCreditTopups).where(eq(aiCreditTopups.id, id));
     if (!topup || topup.customerId !== customerId) {
@@ -66,10 +70,18 @@ export async function GET(req: NextRequest) {
 
     if (topup.status === "paid") {
       result.message = "เติมเครดิตสำเร็จ";
+      // Include new balance for desktop polling
+      const [cust] = await db
+        .select({ creditBalance: customers.creditBalance })
+        .from(customers)
+        .where(eq(customers.id, customerId));
+      if (cust) result.newBalance = cust.creditBalance;
     } else if (topup.status === "pending_review") {
       result.message = "ส่งสลิปแล้ว รอ Admin ตรวจสอบ";
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+    });
   }
 }
