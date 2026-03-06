@@ -35,8 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    // Calculate discount
-    let discountPercent = 0;
+    // Validate referral code (no discount — buyer pays full price, gets cashback later)
     let validReferralCode: string | null = null;
 
     if (referralCode) {
@@ -46,13 +45,12 @@ export async function POST(req: NextRequest) {
         .where(eq(customers.referralCode, referralCode));
 
       if (referrer && referrer.id !== customer.id) {
-        discountPercent = 10;
         validReferralCode = referralCode;
       }
     }
 
     const originalAmount = plan.priceThb;
-    const amountThb = Math.round(originalAmount * (1 - discountPercent / 100));
+    const amountThb = originalAmount; // จ่ายเต็มราคา ได้ cashback ทีหลัง
 
     // Generate PromptPay QR
     const { qrDataUrl, promptpayRef } = await generatePromptpayQR(amountThb);
@@ -65,7 +63,7 @@ export async function POST(req: NextRequest) {
         amountThb,
         originalAmount,
         referralCode: validReferralCode,
-        discountPercent,
+        discountPercent: 0,
         promptpayRef,
       })
       .returning();

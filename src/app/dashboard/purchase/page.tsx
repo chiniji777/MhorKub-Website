@@ -185,9 +185,9 @@ export default function PurchasePage() {
     return (satang / 100).toLocaleString("th-TH");
   }
 
-  function discountedPrice(plan: Plan) {
-    if (!referralCode) return plan.priceThb;
-    return Math.round(plan.priceThb * 0.9);
+  function cashbackAmount(plan: Plan) {
+    if (!referralCode) return 0;
+    return Math.round(plan.priceThb * 0.1);
   }
 
   function periodLabel(days: number) {
@@ -288,7 +288,7 @@ export default function PurchasePage() {
               />
               {referralCode && (
                 <p className="mt-1 text-xs text-accent">
-                  ✨ ลด 10% เมื่อใช้รหัสแนะนำ
+                  ✨ รับเงินคืน 10% เมื่อใช้รหัสแนะนำ
                 </p>
               )}
             </div>
@@ -301,20 +301,20 @@ export default function PurchasePage() {
                     <span className="text-sm text-muted">แพ็กเกจ</span>
                     <span className="font-medium">{selectedPlan.name}</span>
                   </div>
-                  {referralCode && (
-                    <div className="mt-1 flex items-center justify-between text-sm">
-                      <span className="text-muted">ส่วนลด 10%</span>
-                      <span className="text-accent">
-                        -{formatPrice(selectedPlan.priceThb - discountedPrice(selectedPlan))} บาท
-                      </span>
-                    </div>
-                  )}
                   <div className="mt-2 flex items-center justify-between border-t pt-2">
                     <span className="font-semibold">ยอดชำระ</span>
                     <span className="text-lg font-bold text-primary">
-                      {formatPrice(discountedPrice(selectedPlan))} บาท
+                      {formatPrice(selectedPlan.priceThb)} บาท
                     </span>
                   </div>
+                  {referralCode && (
+                    <div className="mt-2 flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm">
+                      <span className="text-emerald-700">เงินคืน 10%</span>
+                      <span className="font-semibold text-emerald-600">
+                        +{formatPrice(cashbackAmount(selectedPlan))} บาท
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Payment method buttons */}
@@ -337,7 +337,7 @@ export default function PurchasePage() {
               <p className="text-lg font-bold text-foreground">
                 {selectedPlan.name} —{" "}
                 <span className="text-primary">
-                  {formatPrice(discountedPrice(selectedPlan))} บาท
+                  {formatPrice(selectedPlan.priceThb)} บาท
                 </span>
               </p>
             </div>
@@ -409,7 +409,7 @@ export default function PurchasePage() {
             <p className="mb-1 text-lg font-bold text-foreground">
               สแกน QR เพื่อชำระ{" "}
               <span className="text-primary">
-                {selectedPlan ? formatPrice(discountedPrice(selectedPlan)) : "—"} บาท
+                {selectedPlan ? formatPrice(selectedPlan.priceThb) : "—"} บาท
               </span>
             </p>
             <p className="mb-6 text-sm text-muted">

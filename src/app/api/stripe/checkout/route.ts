@@ -40,8 +40,7 @@ export async function POST(req: NextRequest) {
       customer.name
     );
 
-    // Calculate discount if referral code
-    let discountPercent = 0;
+    // Validate referral code (no discount — buyer pays full price, gets cashback later)
     let validReferralCode: string | null = null;
 
     if (referralCode) {
@@ -51,14 +50,13 @@ export async function POST(req: NextRequest) {
         .where(eq(customersTable.referralCode, referralCode));
 
       if (referrer && referrer.id !== customer.id) {
-        discountPercent = 10;
         validReferralCode = referralCode;
       }
     }
 
-    // Create order record
+    // Create order record — full price, cashback credited after payment
     const originalAmount = plan.priceThb * 100; // satang
-    const amountThb = Math.round(originalAmount * (1 - discountPercent / 100));
+    const amountThb = originalAmount;
 
     const [order] = await db
       .insert(orders)
@@ -68,7 +66,7 @@ export async function POST(req: NextRequest) {
         amountThb,
         originalAmount,
         referralCode: validReferralCode,
-        discountPercent,
+        discountPercent: 0,
         paymentMethod: "stripe",
         status: "pending",
       })
@@ -94,9 +92,9 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    // Apply Stripe Coupon for referral discount
+    // Store referral code in metadata for cashback processing after payment
     if (validReferralCode) {
-      sessionParams.discounts = [{ coupon: "REFERRAL_10" }];
+      (sessionParams.metadata as Record<string, string>).referralCode = validReferralCode;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

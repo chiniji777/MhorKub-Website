@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Amount, bank account, and bank name are required" }, { status: 400 });
     }
 
-    if (amountThb < 10000) {
-      return NextResponse.json({ error: "Minimum withdrawal is 100 THB (10000 satang)" }, { status: 400 });
+    if (amountThb < 1) {
+      return NextResponse.json({ error: "จำนวนเงินต้องมากกว่า 0" }, { status: 400 });
     }
 
     if (amountThb > customer.creditBalance) {

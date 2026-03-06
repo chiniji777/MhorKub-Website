@@ -92,8 +92,8 @@ export default function WithdrawPage() {
     setWSuccess("");
 
     const amountNum = parseFloat(wAmount);
-    if (!amountNum || amountNum < 100) {
-      setWError("จำนวนขั้นต่ำ 100 บาท");
+    if (!amountNum || amountNum <= 0) {
+      setWError("กรุณากรอกจำนวนเงินที่ต้องการถอน");
       return;
     }
     if (!wBank) {
@@ -241,11 +241,11 @@ export default function WithdrawPage() {
             </label>
             <input
               type="number"
-              min={100}
+              min={1}
               step={1}
               value={wAmount}
               onChange={(e) => setWAmount(e.target.value)}
-              placeholder="ขั้นต่ำ 100 บาท"
+              placeholder="จำนวนเงินที่ต้องการถอน (บาท)"
               className="w-full rounded-lg border border-border px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
@@ -287,7 +287,7 @@ export default function WithdrawPage() {
 
           <button
             type="submit"
-            disabled={wSubmitting || stats.creditBalanceThb < 100}
+            disabled={wSubmitting || stats.creditBalanceThb <= 0}
             className="w-full rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
           >
             {wSubmitting ? (
@@ -297,9 +297,9 @@ export default function WithdrawPage() {
             )}
           </button>
 
-          {stats.creditBalanceThb < 100 && (
+          {stats.creditBalanceThb <= 0 && (
             <p className="text-center text-xs text-muted">
-              ยอดขั้นต่ำ 100 บาทถึงจะถอนได้
+              ยังไม่มียอดเงินสำหรับถอน
             </p>
           )}
         </form>

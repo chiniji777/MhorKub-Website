@@ -45,7 +45,9 @@ export async function createLicenseFromOrder(
 
 /**
  * Process referral cashback for an order.
- * Gives 10% of order amount to the referrer.
+ * - Referrer gets 10% cashback (from buyer using their code)
+ * - Buyer also gets 10% cashback (for using a referral code)
+ * Both are credited to creditBalance and can be withdrawn.
  */
 export async function processReferralCashback(orderId: number) {
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
@@ -59,7 +61,9 @@ export async function processReferralCashback(orderId: number) {
   if (!referrer) return null;
 
   const cashbackAmount = Math.round(order.amountThb * 0.1);
+  const cashbackDisplay = (cashbackAmount / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 });
 
+  // 1. Referrer cashback (10%)
   await db.insert(referralTransactions).values({
     referrerId: referrer.id,
     orderId: order.id,
@@ -72,8 +76,6 @@ export async function processReferralCashback(orderId: number) {
     .set({ creditBalance: sql`${customers.creditBalance} + ${cashbackAmount}` })
     .where(eq(customers.id, referrer.id));
 
-  // Notify referrer about cashback
-  const cashbackDisplay = (cashbackAmount / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 });
   createNotification(
     referrer.id,
     "referral_purchase",
@@ -81,7 +83,27 @@ export async function processReferralCashback(orderId: number) {
     `คุณได้รับเงินคืน ฿${cashbackDisplay} จากการซื้อของคนที่คุณแนะนำ`
   ).catch(() => {});
 
-  return { referrerId: referrer.id, cashbackAmount };
+  // 2. Buyer cashback (10%) — buyer pays full price but gets cashback to wallet
+  await db.insert(referralTransactions).values({
+    referrerId: order.customerId,
+    orderId: order.id,
+    amountThb: cashbackAmount,
+    credited: true,
+  });
+
+  await db
+    .update(customers)
+    .set({ creditBalance: sql`${customers.creditBalance} + ${cashbackAmount}` })
+    .where(eq(customers.id, order.customerId));
+
+  createNotification(
+    order.customerId,
+    "referral_purchase",
+    "ได้รับเงินคืนจากการใช้รหัสแนะนำ!",
+    `คุณได้รับเงินคืน ฿${cashbackDisplay} จากการใช้รหัสแนะนำในการซื้อ`
+  ).catch(() => {});
+
+  return { referrerId: referrer.id, buyerId: order.customerId, cashbackAmount };
 }
 
 /**
