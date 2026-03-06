@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   ChevronDown,
   Bell,
+  Shield,
 } from "lucide-react";
 import { NAV_LINKS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ export function Header() {
     active: boolean;
   } | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -85,6 +87,18 @@ export function Header() {
         .catch(() => {
           /* ignore */
         });
+
+      // Check if user is admin
+      fetch("/api/v1/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          setIsAdmin(!!data.isAdmin);
+        })
+        .catch(() => {
+          /* ignore */
+        });
     }
 
     // Listen for storage changes (login/logout in other tabs)
@@ -102,6 +116,7 @@ export function Header() {
           setCustomer(null);
           setLicense(null);
           setUnreadCount(0);
+          setIsAdmin(false);
         }
       }
     }
@@ -130,6 +145,7 @@ export function Header() {
     setCustomer(null);
     setLicense(null);
     setUnreadCount(0);
+    setIsAdmin(false);
     setDropdownOpen(false);
     router.push("/login");
   }
@@ -250,6 +266,18 @@ export function Header() {
                     {license?.active ? "อัพเกรด / ต่ออายุ" : "ซื้อแพ็กเกจ"}
                   </Link>
 
+                  {/* Admin Panel (only for admins) */}
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/5"
+                    >
+                      <Shield size={16} className="text-muted" />
+                      Admin Panel
+                    </Link>
+                  )}
+
                   {/* Logout */}
                   <div className="border-t border-border/50 mt-1 pt-1">
                     <button
@@ -369,6 +397,16 @@ export function Header() {
                 <ShoppingCart size={16} className="text-muted" />
                 {license?.active ? "อัพเกรด / ต่ออายุ" : "ซื้อแพ็กเกจ"}
               </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5"
+                >
+                  <Shield size={16} className="text-muted" />
+                  Admin Panel
+                </Link>
+              )}
               <button
                 onClick={() => {
                   setOpen(false);

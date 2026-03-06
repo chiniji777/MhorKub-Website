@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCustomer } from "@/lib/customer-auth";
 import { db } from "@/db";
-import { licenses, customers } from "@/db/schema";
+import { licenses, customers, adminUsers } from "@/db/schema";
 import { eq, and, gte, desc } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -23,6 +23,13 @@ export async function GET(req: NextRequest) {
     .orderBy(desc(licenses.expiresAt))
     .limit(1);
 
+  // Check if customer is also an admin
+  const [admin] = await db
+    .select({ id: adminUsers.id })
+    .from(adminUsers)
+    .where(eq(adminUsers.email, customer.email))
+    .limit(1);
+
   return NextResponse.json({
     id: customer.id,
     email: customer.email,
@@ -30,6 +37,7 @@ export async function GET(req: NextRequest) {
     phone: customer.phone,
     referralCode: customer.referralCode,
     creditBalance: customer.creditBalance,
+    isAdmin: !!admin,
     license: activeLicense
       ? {
           id: activeLicense.id,
