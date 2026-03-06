@@ -8,7 +8,6 @@ import {
   Clock,
   XCircle,
   AlertCircle,
-  Camera,
   Smartphone,
 } from "lucide-react";
 
@@ -194,7 +193,6 @@ export default function SlipUploadPage({
               ref={fileRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               onChange={handleFileSelect}
             />
@@ -205,12 +203,12 @@ export default function SlipUploadPage({
                 onClick={() => fileRef.current?.click()}
                 className="w-full rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 px-4 py-10 text-center transition-colors hover:border-primary/50 hover:bg-primary/10 active:scale-[0.98]"
               >
-                <Camera className="mx-auto mb-3 h-10 w-10 text-primary/60" />
+                <Upload className="mx-auto mb-3 h-10 w-10 text-primary/60" />
                 <p className="text-sm font-medium text-primary">
-                  ถ่ายภาพ / เลือกสลิป
+                  แนบสลิปการโอนเงิน
                 </p>
                 <p className="mt-1 text-xs text-muted">
-                  JPG, PNG รองรับภาพจากกล้อง
+                  เลือกรูปสลิปจากเครื่อง (JPG, PNG)
                 </p>
               </button>
             ) : (
