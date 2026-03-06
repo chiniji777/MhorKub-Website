@@ -3,8 +3,9 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { db } from "@/db";
-import { adminUsers } from "@/db/schema";
+import { adminUsers, customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { verifyCustomerToken } from "@/lib/customer-auth";
 
 class InvalidCredentialsError extends CredentialsSignin {
   code = "invalid_credentials";
@@ -16,8 +17,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        customerToken: { label: "Customer Token", type: "text" },
       },
       async authorize(credentials) {
+        const customerToken = credentials?.customerToken as string;
+
+        // Bridge login: customer JWT → admin session
+        if (customerToken) {
+          try {
+            const { customerId } = await verifyCustomerToken(customerToken);
+            const [customer] = await db
+              .select()
+              .from(customers)
+              .where(eq(customers.id, customerId))
+              .limit(1);
+
+            if (!customer) throw new InvalidCredentialsError();
+
+            // Check if this customer is also an admin
+            const [admin] = await db
+              .select()
+              .from(adminUsers)
+              .where(eq(adminUsers.email, customer.email))
+              .limit(1);
+
+            if (!admin) throw new InvalidCredentialsError();
+
+            return {
+              id: String(admin.id),
+              name: admin.name,
+              email: admin.email,
+              image: admin.image,
+            };
+          } catch {
+            throw new InvalidCredentialsError();
+          }
+        }
+
+        // Standard email/password login
         const email = credentials?.email as string;
         const password = credentials?.password as string;
 

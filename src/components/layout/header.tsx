@@ -269,7 +269,7 @@ export function Header() {
                   {/* Admin Panel (only for admins) */}
                   {isAdmin && (
                     <Link
-                      href="/admin"
+                      href="/admin/bridge"
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/5"
                     >
@@ -399,7 +399,7 @@ export function Header() {
               </Link>
               {isAdmin && (
                 <Link
-                  href="/admin"
+                  href="/admin/bridge"
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-2.5 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/5"
                 >
