@@ -78,18 +78,19 @@ export default function TopupPage() {
         if (!res.ok) return;
         const data = await res.json();
 
-        if (data.uploaded) {
+        if (data.status === "paid") {
           clearInterval(interval);
-          if (data.status === "paid") {
-            setNewBalance(data.newBalance ?? null);
-            setStep("done");
-          } else if (data.status === "pending_review") {
-            setStep("pending_review");
-          } else if (data.status === "rejected") {
-            setRejectReason(data.message || "สลิปไม่ผ่านการตรวจสอบ");
-            setStep("rejected");
-          }
+          setNewBalance(data.newBalance ?? null);
+          setStep("done");
+        } else if (data.status === "pending_review") {
+          clearInterval(interval);
+          setStep("pending_review");
+        } else if (data.status === "rejected") {
+          clearInterval(interval);
+          setRejectReason(data.message || "สลิปไม่ผ่านการตรวจสอบ");
+          setStep("rejected");
         }
+        // status "pending" → keep polling
       } catch {
         // polling error, ignore
       }

@@ -211,15 +211,18 @@ export default function PurchasePage() {
         const res = await fetch(`/api/v1/slip/status?token=${slipUploadToken}&_t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        if (data.uploaded) {
+        if (data.status === "paid") {
           clearInterval(interval);
-          if (data.status === "paid") setStep("done");
-          else if (data.status === "pending_review") setStep("pending_review");
-          else if (data.status === "rejected") {
-            setRejectReason(data.message || "สลิปไม่ผ่าน");
-            setStep("rejected");
-          }
+          setStep("done");
+        } else if (data.status === "pending_review") {
+          clearInterval(interval);
+          setStep("pending_review");
+        } else if (data.status === "rejected") {
+          clearInterval(interval);
+          setRejectReason(data.message || "สลิปไม่ผ่าน");
+          setStep("rejected");
         }
+        // status "pending" → keep polling
       } catch { /* ignore polling errors */ }
     }, 4000);
 
