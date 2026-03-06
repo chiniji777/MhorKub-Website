@@ -11,6 +11,7 @@ export const NAV_LINKS = [
   { href: "/", label: "หน้าหลัก" },
   { href: "/features", label: "ฟีเจอร์" },
   { href: "/pricing", label: "ราคา" },
+  { href: "/download", label: "ดาวน์โหลด" },
   { href: "/blog", label: "บทความ" },
   { href: "/about", label: "เกี่ยวกับเรา" },
   { href: "/contact", label: "ติดต่อ" },
