@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { orders, licenses, plans, customers, referralTransactions } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, and, gte, sql, desc } from "drizzle-orm";
 import { createNotification } from "@/lib/notifications";
 
 interface CreateLicenseOptions {
@@ -11,8 +11,9 @@ interface CreateLicenseOptions {
 }
 
 /**
- * Create a license for a paid order.
- * Used by both PromptPay (verify-slip) and Stripe (webhook) flows.
+ * Create or extend a license for a paid order.
+ * If the customer already has an active license, extends its expiresAt
+ * (preserving remaining days). Otherwise creates a new license.
  */
 export async function createLicenseFromOrder(
   orderId: number,
@@ -23,8 +24,47 @@ export async function createLicenseFromOrder(
   const [plan] = await db.select().from(plans).where(eq(plans.id, planId));
   if (!plan) throw new Error(`Plan ${planId} not found`);
 
-  const startsAt = options?.startsAt ?? new Date();
-  const expiresAt = new Date(startsAt.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+  const durationMs = plan.durationDays * 24 * 60 * 60 * 1000;
+  const now = new Date();
+
+  // Check for existing active license (not expired)
+  const [existing] = await db
+    .select()
+    .from(licenses)
+    .where(
+      and(
+        eq(licenses.customerId, customerId),
+        eq(licenses.status, "active"),
+        gte(licenses.expiresAt, now)
+      )
+    )
+    .orderBy(desc(licenses.expiresAt))
+    .limit(1);
+
+  if (existing) {
+    // Extend from current expiresAt (preserves remaining days)
+    const newExpiresAt = new Date(existing.expiresAt.getTime() + durationMs);
+
+    const [updated] = await db
+      .update(licenses)
+      .set({
+        expiresAt: newExpiresAt,
+        orderId,
+        stripeSubscriptionId: options?.stripeSubscriptionId ?? existing.stripeSubscriptionId,
+        autoRenew: options?.autoRenew ?? existing.autoRenew,
+      })
+      .where(eq(licenses.id, existing.id))
+      .returning();
+
+    console.log(
+      `[License] Extended #${existing.id}: ${existing.expiresAt.toISOString()} → ${newExpiresAt.toISOString()}`
+    );
+    return updated;
+  }
+
+  // No active license — create new
+  const startsAt = options?.startsAt ?? now;
+  const expiresAt = new Date(startsAt.getTime() + durationMs);
 
   const [license] = await db
     .insert(licenses)
