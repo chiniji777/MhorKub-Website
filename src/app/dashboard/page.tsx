@@ -296,14 +296,14 @@ export default function DashboardOverview() {
           <p className="mt-1 text-xs text-muted">
             สำหรับใช้ AI ช่วยวินิจฉัยในโปรแกรม
           </p>
-          <Link
-            href="/dashboard/topup"
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
-          >
-            <ShoppingCart size={14} />
-            เติมเครดิต
-          </Link>
-          <div className="mt-4 border-t border-border/50 pt-4">
+          <div className="mt-3 flex flex-col gap-2">
+            <Link
+              href="/dashboard/topup"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 transition-colors w-fit"
+            >
+              <ShoppingCart size={14} />
+              เติมเครดิต
+            </Link>
             <button
               onClick={() => {
                 localStorage.removeItem("accessToken");
@@ -311,7 +311,7 @@ export default function DashboardOverview() {
                 localStorage.removeItem("customer");
                 router.push("/login");
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors w-fit"
             >
               <LogOut size={14} />
               ออกจากระบบ
