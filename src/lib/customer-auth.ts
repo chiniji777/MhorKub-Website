@@ -4,9 +4,10 @@ import { db } from "@/db";
 import { customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-const secret = new TextEncoder().encode(
-  process.env.CUSTOMER_JWT_SECRET || "dev-secret-change-me"
-);
+if (!process.env.CUSTOMER_JWT_SECRET) {
+  throw new Error("CUSTOMER_JWT_SECRET environment variable is required");
+}
+const secret = new TextEncoder().encode(process.env.CUSTOMER_JWT_SECRET);
 
 export async function signCustomerToken(customerId: number) {
   return new SignJWT({ sub: String(customerId) })

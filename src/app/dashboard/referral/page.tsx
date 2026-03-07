@@ -85,7 +85,7 @@ export default function ReferralPage() {
     <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">รหัสแนะนำ</h1>
-        <p className="text-sm text-muted">แนะนำเพื่อนมาซื้อ → เพื่อนได้ลด 10% · คุณได้เงินคืน 10%</p>
+        <p className="text-sm text-muted">แนะนำเพื่อน → ได้เงินคืนทั้งคู่ 10% · ใช้เป็นเครดิต AI ได้</p>
       </div>
 
       {/* Referral Code */}

@@ -65,7 +65,7 @@ export default function AiCreditPage() {
     <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">เครดิต AI</h1>
-        <p className="text-sm text-muted">ยอดเครดิตสำหรับใช้ AI ช่วยวินิจฉัยในโปรแกรม</p>
+        <p className="text-sm text-muted">ยอดเครดิตรวม (เงินคืน Referral + เติมเครดิต) สำหรับใช้ AI ในโปรแกรม</p>
       </div>
 
       {/* Balance Card */}
@@ -84,7 +84,7 @@ export default function AiCreditPage() {
             <span className="text-base font-normal text-muted">บาท</span>
           </p>
           <p className="mt-2 text-xs text-muted">
-            สำหรับใช้ AI ช่วยวินิจฉัยในโปรแกรม MhorKub
+            เครดิตรวม (เงินคืน Referral + เติมเงิน) ใช้ AI ในโปรแกรม MhorKub
           </p>
         </div>
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireCustomer } from "@/lib/customer-auth";
 import { db } from "@/db";
 import { orders, plans, customers } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { generatePromptpayQR } from "@/lib/promptpay";
 import { signSlipUploadToken, buildSlipUploadUrl } from "@/lib/slip-token";
 
@@ -43,10 +43,10 @@ export async function POST(req: NextRequest) {
       const [referrer] = await db
         .select({ id: customers.id, referralCode: customers.referralCode })
         .from(customers)
-        .where(eq(customers.referralCode, referralCode));
+        .where(sql`UPPER(${customers.referralCode}) = UPPER(${referralCode})`);
 
       if (referrer && referrer.id !== customer.id) {
-        validReferralCode = referralCode;
+        validReferralCode = referrer.referralCode; // ใช้ค่าจริงจาก DB
       }
     }
 

@@ -200,7 +200,7 @@ export default function WithdrawPage() {
     <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">ถอนเงิน</h1>
-        <p className="text-sm text-muted">ถอนรายได้จากรหัสแนะนำ</p>
+        <p className="text-sm text-muted">ถอนยอดเครดิต (รวมเงินคืน Referral + เครดิต AI)</p>
       </div>
 
       {/* Withdrawal Form */}

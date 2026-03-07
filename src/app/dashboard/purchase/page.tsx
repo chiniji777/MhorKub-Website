@@ -338,7 +338,7 @@ export default function PurchasePage() {
               />
               {referralCode && (
                 <p className="mt-1 text-xs text-accent">
-                  ✨ รับเงินคืน 10% เมื่อใช้รหัสแนะนำ
+                  ✨ ได้เงินคืนทั้งคู่ 10% · ใช้เป็นเครดิต AI ได้
                 </p>
               )}
             </div>

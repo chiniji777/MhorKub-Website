@@ -294,7 +294,7 @@ export default function DashboardOverview() {
             <span className="text-base font-normal text-muted">บาท</span>
           </p>
           <p className="mt-1 text-xs text-muted">
-            สำหรับใช้ AI ช่วยวินิจฉัยในโปรแกรม
+            เครดิตรวม (Referral + เติมเงิน) ใช้ AI ในโปรแกรมได้
           </p>
           <div className="mt-3 flex flex-col gap-2">
             <Link
@@ -334,7 +334,7 @@ export default function DashboardOverview() {
             </Link>
           </div>
           <p className="text-sm text-muted mb-3">
-            แนะนำเพื่อนมาซื้อ → เพื่อนได้ลด 10% · คุณได้รับเงินคืน 10%
+            แนะนำเพื่อน → ได้เงินคืนทั้งคู่ 10% · ใช้เป็นเครดิต AI ได้
           </p>
           <div className="flex items-center gap-2">
             <code className="rounded-lg bg-primary/5 px-4 py-2.5 text-lg font-bold tracking-wider text-primary">

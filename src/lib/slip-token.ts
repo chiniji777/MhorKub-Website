@@ -1,8 +1,9 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(
-  process.env.CUSTOMER_JWT_SECRET || "dev-secret-change-me"
-);
+if (!process.env.CUSTOMER_JWT_SECRET) {
+  throw new Error("CUSTOMER_JWT_SECRET environment variable is required");
+}
+const secret = new TextEncoder().encode(process.env.CUSTOMER_JWT_SECRET);
 
 export interface SlipUploadPayload {
   type: "topup" | "order";
