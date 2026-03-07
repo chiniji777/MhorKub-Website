@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       id: topup.id,
       type: "topup",
       customerId: customer.id,
-      amountThb: topup.amountThb,
+      amount: topup.amountThb,
     });
 
     const slipUploadUrl = buildSlipUploadUrl(slipUploadToken);
