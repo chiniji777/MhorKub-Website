@@ -4,19 +4,21 @@ const secret = new TextEncoder().encode(
   process.env.CUSTOMER_JWT_SECRET || "dev-secret-change-me"
 );
 
-interface SlipTokenPayload {
+export interface SlipUploadPayload {
+  type: "topup" | "order";
   id: number;
-  type: "order" | "topup";
   customerId: number;
-  amountThb: number;
+  amount: number; // satang — for display on mobile page
 }
 
-export async function signSlipUploadToken(params: SlipTokenPayload) {
+/** Sign a short-lived token for mobile slip upload (1 hour) */
+export async function signSlipUploadToken(payload: SlipUploadPayload) {
   return new SignJWT({
-    sub: String(params.id),
-    typ: params.type,
-    cid: params.customerId,
-    amt: params.amountThb,
+    purpose: "slip-upload",
+    type: payload.type,
+    id: payload.id,
+    cid: payload.customerId,
+    amt: payload.amount,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -24,17 +26,24 @@ export async function signSlipUploadToken(params: SlipTokenPayload) {
     .sign(secret);
 }
 
-export async function verifySlipUploadToken(token: string): Promise<SlipTokenPayload> {
+/** Verify and decode a slip upload token */
+export async function verifySlipUploadToken(token: string): Promise<SlipUploadPayload> {
   const { payload } = await jwtVerify(token, secret);
+
+  if (payload.purpose !== "slip-upload") {
+    throw new Error("Invalid token purpose");
+  }
+
   return {
-    id: Number(payload.sub),
-    type: payload.typ as "order" | "topup",
-    customerId: Number(payload.cid),
-    amountThb: Number(payload.amt),
+    type: payload.type as "topup" | "order",
+    id: payload.id as number,
+    customerId: payload.cid as number,
+    amount: payload.amt as number,
   };
 }
 
-export function generateSlipUploadUrl(token: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "https://mhorkub.com";
-  return `${base}/slip/${token}`;
+/** Build the full mobile upload URL */
+export function buildSlipUploadUrl(token: string): string {
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://mhorkub.com";
+  return `${base}/upload-slip?token=${token}`;
 }
