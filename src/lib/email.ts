@@ -1,7 +1,6 @@
 import crypto from "crypto";
 
-const WORKER_URL = process.env.CLOUDFLARE_EMAIL_WORKER_URL;
-const API_KEY = process.env.CLOUDFLARE_EMAIL_API_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://mhorkub.com";
 
 export function generateVerificationToken(): string {
@@ -13,20 +12,21 @@ export async function sendVerificationEmail(
   token: string,
   customerName: string
 ) {
-  if (!WORKER_URL || !API_KEY) {
-    throw new Error("Email service not configured");
+  if (!RESEND_API_KEY) {
+    throw new Error("Email service not configured (RESEND_API_KEY missing)");
   }
 
   const verifyUrl = `${APP_URL}/verify-email?token=${token}`;
   const html = buildVerificationEmailHtml(customerName, verifyUrl);
 
-  const response = await fetch(WORKER_URL, {
+  const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
+      from: "MhorKub <noreply@mhorkub.com>",
       to,
       subject: "ยืนยันอีเมลของคุณ — MhorKub",
       html,
@@ -34,8 +34,8 @@ export async function sendVerificationEmail(
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to send email: ${error}`);
+    const error = await response.json().catch(() => ({}));
+    throw new Error(`Failed to send email: ${JSON.stringify(error)}`);
   }
 }
 
