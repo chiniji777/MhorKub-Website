@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 
 declare global {
   interface Window {
@@ -32,6 +32,9 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
@@ -75,6 +78,11 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.code === "EMAIL_NOT_VERIFIED") {
+          setEmailNotVerified(true);
+          setError("");
+          return;
+        }
         setError(
           data.error === "Invalid credentials"
             ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
@@ -151,6 +159,28 @@ function LoginForm() {
     document.body.appendChild(script);
   }, [handleGoogleCallback]);
 
+  async function handleResendVerification() {
+    setResendLoading(true);
+    setResendSuccess(false);
+    try {
+      const res = await fetch("/api/v1/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (res.status === 429) {
+        const data = await res.json();
+        setError(data.error);
+      } else {
+        setResendSuccess(true);
+      }
+    } catch {
+      setError("ส่งอีเมลใหม่ไม่สำเร็จ");
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
   function handleGoogleClick() {
     setGoogleLoading(true);
     if (isDesktopPopup) {
@@ -189,6 +219,26 @@ function LoginForm() {
             <h1 className="text-xl font-bold text-foreground">เข้าสู่ระบบ</h1>
             <p className="text-sm text-muted">เข้าสู่ระบบบัญชี MhorKub ของคุณ</p>
           </div>
+
+          {/* Email not verified warning */}
+          {emailNotVerified && (
+            <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ</p>
+                  <p className="text-xs text-amber-600 mt-1">ตรวจสอบอีเมลของคุณสำหรับลิงก์ยืนยัน</p>
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resendLoading}
+                    className="mt-2 text-xs font-medium text-primary hover:text-primary-dark disabled:text-muted transition-colors"
+                  >
+                    {resendLoading ? "กำลังส่ง..." : resendSuccess ? "ส่งแล้ว! ตรวจสอบอีเมลของคุณ" : "ส่งลิงก์ยืนยันอีกครั้ง"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Error message */}
           {error && (

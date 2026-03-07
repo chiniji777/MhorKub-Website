@@ -3,9 +3,10 @@
   "configurations": [
     {
       "name": "mhorkub-web",
-      "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "npm", "run", "dev"],
-      "port": 3000
+      "runtimeExecutable": "npx.cmd",
+      "runtimeArgs": ["next", "dev"],
+      "port": 3000,
+      "autoPort": false
     }
   ]
 }

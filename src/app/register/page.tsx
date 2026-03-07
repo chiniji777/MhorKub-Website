@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Lock, Mail, Eye, EyeOff, ArrowLeft, Loader2, User, Phone, Tag } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, ArrowLeft, Loader2, User, Phone, Tag, CheckCircle2 } from "lucide-react";
 
 // Window.google type is declared in login/page.tsx
 
@@ -25,6 +25,8 @@ function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -156,22 +158,91 @@ function RegisterForm() {
         return;
       }
 
-      // Store tokens in localStorage
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-      localStorage.setItem("customer", JSON.stringify(data.customer));
+      // Email verification required
+      if (data.requiresVerification) {
+        setVerificationSent(true);
+        return;
+      }
 
-      // Check if opened inside Electron BrowserWindow
-      const isDesktopPopup = navigator.userAgent.includes("Electron");
-
-      if (!isDesktopPopup) {
-        router.push(redirect);
+      // Fallback: if tokens are returned (shouldn't happen now)
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+        localStorage.setItem("customer", JSON.stringify(data.customer));
+        if (!isDesktopPopup) {
+          router.push(redirect);
+        }
       }
     } catch {
       setError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResendVerification() {
+    if (resendCooldown > 0) return;
+    try {
+      const res = await fetch("/api/v1/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (res.status === 429) {
+        setError(data.error);
+        return;
+      }
+      // Start 120s cooldown
+      setResendCooldown(120);
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) { clearInterval(interval); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      setError("ส่งอีเมลใหม่ไม่สำเร็จ");
+    }
+  }
+
+  // Verification sent screen
+  if (verificationSent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-blue-50/30 to-white px-4 py-8">
+        <div className="w-full max-w-sm">
+          <div className="rounded-2xl border border-border/50 bg-white p-8 shadow-lg text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground mb-2">ตรวจสอบอีเมลของคุณ</h1>
+            <p className="text-sm text-muted mb-1">เราส่งลิงก์ยืนยันไปที่</p>
+            <p className="text-sm font-medium text-foreground mb-6">{email}</p>
+            <p className="text-xs text-muted mb-6">
+              กรุณาคลิกลิงก์ในอีเมลเพื่อยืนยันบัญชีของคุณ<br />
+              ลิงก์จะหมดอายุใน 24 ชั่วโมง
+            </p>
+            <button
+              onClick={handleResendVerification}
+              disabled={resendCooldown > 0}
+              className="text-sm text-primary hover:text-primary-dark font-medium disabled:text-muted disabled:cursor-not-allowed transition-colors"
+            >
+              {resendCooldown > 0
+                ? `ส่งอีกครั้งใน ${resendCooldown} วินาที`
+                : "ส่งอีเมลอีกครั้ง"}
+            </button>
+            {error && (
+              <p className="mt-3 text-xs text-red-600">{error}</p>
+            )}
+            <div className="mt-6 pt-4 border-t border-border">
+              <Link href="/login" className="text-sm text-muted hover:text-foreground transition-colors">
+                กลับไปหน้าเข้าสู่ระบบ
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

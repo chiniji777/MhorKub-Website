@@ -95,14 +95,15 @@ export async function GET(req: NextRequest) {
           email,
           name: name || email.split("@")[0],
           googleId,
+          emailVerified: true,
           referralCode: generateReferralCode(),
         })
         .returning();
     } else if (!customer.googleId) {
-      // Link Google account to existing customer
+      // Link Google account to existing customer + auto-verify
       await db
         .update(customers)
-        .set({ googleId })
+        .set({ googleId, emailVerified: true })
         .where(eq(customers.id, customer.id));
     }
 

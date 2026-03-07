@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/db";
-import { customers } from "@/db/schema";
+import { customers, emailVerificationTokens } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { signCustomerToken, signRefreshToken, generateReferralCode } from "@/lib/customer-auth";
+import { generateReferralCode } from "@/lib/customer-auth";
 import { createNotification } from "@/lib/notifications";
+import { generateVerificationToken, sendVerificationEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,18 +61,24 @@ export async function POST(req: NextRequest) {
       ).catch(() => {});
     }
 
-    const accessToken = await signCustomerToken(customer.id);
-    const refreshToken = await signRefreshToken(customer.id);
+    // Generate verification token and send email
+    const token = generateVerificationToken();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await db.insert(emailVerificationTokens).values({
+      customerId: customer.id,
+      token,
+      expiresAt,
+    });
+
+    // Send verification email (non-blocking)
+    sendVerificationEmail(customer.email, token, customer.name).catch((err) => {
+      console.error("Failed to send verification email:", err);
+    });
 
     return NextResponse.json({
-      customer: {
-        id: customer.id,
-        email: customer.email,
-        name: customer.name,
-        referralCode: customer.referralCode,
-      },
-      accessToken,
-      refreshToken,
+      requiresVerification: true,
+      message: "กรุณาตรวจสอบอีเมลเพื่อยืนยันการสมัครสมาชิก",
     }, { status: 201 });
   } catch (err) {
     console.error("Registration error:", err);

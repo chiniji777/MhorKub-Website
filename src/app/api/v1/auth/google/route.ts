@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
           email,
           name: name || email.split("@")[0],
           googleId,
+          emailVerified: true,
           referralCode: generateReferralCode(),
           referredBy,
         })
@@ -59,10 +60,10 @@ export async function POST(req: NextRequest) {
         ).catch(() => {});
       }
     } else if (!customer.googleId) {
-      // Link Google account
+      // Link Google account + auto-verify
       await db
         .update(customers)
-        .set({ googleId })
+        .set({ googleId, emailVerified: true })
         .where(eq(customers.id, customer.id));
     }
 

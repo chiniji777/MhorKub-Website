@@ -24,6 +24,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
+    // Check email verification
+    if (!customer.emailVerified) {
+      return NextResponse.json(
+        { error: "กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ", code: "EMAIL_NOT_VERIFIED" },
+        { status: 403 }
+      );
+    }
+
     const accessToken = await signCustomerToken(customer.id);
     const refreshToken = await signRefreshToken(customer.id);
 

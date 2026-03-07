@@ -13,6 +13,7 @@ export const customers = pgTable("customers", {
   referredBy: integer("referred_by"),
   creditBalance: integer("credit_balance").default(0).notNull(),
   stripeCustomerId: text("stripe_customer_id").unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -119,6 +120,17 @@ export const usedSlipRefs = pgTable("used_slip_refs", {
   transRef: text("trans_ref").unique().notNull(),
   orderId: integer("order_id"),       // nullable — for subscription orders
   topupId: integer("topup_id"),       // nullable — for AI credit topups
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Email Verification ─────────────────────────────────────────
+
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  token: text("token").unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
