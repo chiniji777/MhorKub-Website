@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { db } from "@/db";
-import { customers, orders, licenses, deviceActivations } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { customers, orders, licenses, deviceActivations, plans } from "@/db/schema";
+import { eq, sql, desc } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -44,11 +44,29 @@ export async function GET(
       .from(deviceActivations)
       .where(eq(deviceActivations.customerId, id));
 
+    const customerLicenses = await db
+      .select({
+        id: licenses.id,
+        planId: licenses.planId,
+        planName: plans.name,
+        orderId: licenses.orderId,
+        startsAt: licenses.startsAt,
+        expiresAt: licenses.expiresAt,
+        status: licenses.status,
+        autoRenew: licenses.autoRenew,
+        createdAt: licenses.createdAt,
+      })
+      .from(licenses)
+      .leftJoin(plans, eq(plans.id, licenses.planId))
+      .where(eq(licenses.customerId, id))
+      .orderBy(desc(licenses.createdAt));
+
     return NextResponse.json({
       customer,
       orderCount: orderCount.count,
       licenseCount: licenseCount.count,
       deviceCount: deviceCount.count,
+      licenses: customerLicenses,
     });
   } catch {
     return NextResponse.json({ error: "Failed" }, { status: 500 });
