@@ -8,7 +8,6 @@ export const SITE = {
 } as const;
 
 export const NAV_LINKS = [
-  { href: "/", label: "หน้าหลัก" },
   { href: "/features", label: "ฟีเจอร์" },
   { href: "/pricing", label: "ราคา" },
   { href: "/download", label: "ดาวน์โหลด" },

@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-primary: #0EA5E9;
-  --color-primary-dark: #0284C7;
-  --color-primary-light: #BAE6FD;
-  --color-accent: #22C55E;
-  --color-accent-dark: #16A34A;
-  --color-accent-light: #DCFCE7;
+  --color-primary: #06B6D4;
+  --color-primary-dark: #0891B2;
+  --color-primary-light: #A5F3FC;
+  --color-accent: #10B981;
+  --color-accent-dark: #059669;
+  --color-accent-light: #D1FAE5;
   --color-background: #F8FAFC;
   --color-surface: #FFFFFF;
   --color-foreground: #0F172A;
@@ -47,8 +47,8 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(14, 165, 233, 0.15); }
-  50% { box-shadow: 0 0 40px rgba(14, 165, 233, 0.3); }
+  0%, 100% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.3); }
 }
 
 @keyframes slide-up {

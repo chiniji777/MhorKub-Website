@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Phone, Mail, MapPin, ChevronDown } from "lucide-react";
+import { Send, Mail, MapPin, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const faqs = [
   { q: "MhorKub เหมาะกับคลินิกแบบไหน?", a: "ทุกประเภท ตั้งแต่คลินิกเวชกรรมทั่วไป ผิวหนัง ทันตกรรม จนถึงโรงพยาบาลขนาดเล็ก" },
-  { q: "ใช้งานได้กี่เครื่อง?", a: "แพ็กเกจ Trial ใช้ได้ 1 เครื่อง, Clinic ใช้ได้ 3 เครื่อง, Hospital ไม่จำกัด" },
-  { q: "ต้องมีอินเทอร์เน็ตไหม?", a: "ไม่จำเป็น MhorKub เป็น Offline-First ทำงานได้แม้ไม่มีเน็ต ข้อมูลเก็บในเครื่องของคุณ" },
+  { q: "ใช้งานได้กี่เครื่อง?", a: "ใช้งานได้ไม่จำกัดจำนวนเครื่องในวง LAN เดียวกัน ติดตั้งกี่เครื่องก็ได้ค่ะ" },
+  { q: "ต้องมีอินเทอร์เน็ตไหม?", a: "ระบบพื้นฐานเป็น Offline-First ทำงานได้แม้ไม่มีเน็ต แต่ฟีเจอร์ AI ต้องใช้อินเทอร์เน็ตเพื่อ Login และเชื่อมต่อค่ะ" },
   { q: "มีค่าติดตั้งไหม?", a: "ไม่มีค่ะ ดาวน์โหลดและติดตั้งเองได้เลย ใช้เวลาไม่เกิน 5 นาที" },
   { q: "ข้อมูลคนไข้ปลอดภัยไหม?", a: "ปลอดภัยค่ะ ข้อมูลเก็บในเครื่องของคลินิกเท่านั้น ไม่ส่งขึ้นคลาวด์ เข้ารหัสทุกจุด" },
+  { q: "ทดลองใช้ฟรีได้อย่างไร?", a: "สมัครสมาชิกแล้วดาวน์โหลดได้เลยค่ะ ทดลองฟรี 14 วันเต็ม ไม่ต้องใส่บัตรเครดิต" },
+  { q: "ติดปัญหาติดต่อใครได้?", a: "ส่งข้อความผ่านหน้านี้ หรืออีเมล contact@mhorkub.com ตอบภายใน 24 ชั่วโมง" },
 ];
 
 export default function ContactPage() {
@@ -122,14 +124,12 @@ export default function ContactPage() {
                 <li className="flex items-center gap-3 text-sm text-muted">
                   <Mail size={18} className="text-primary" /> contact@mhorkub.com
                 </li>
-                <li className="flex items-center gap-3 text-sm text-muted">
-                  <Phone size={18} className="text-primary" /> 02-xxx-xxxx
-                </li>
-                <li className="flex items-center gap-3 text-sm text-muted">
+<li className="flex items-center gap-3 text-sm text-muted">
                   <MapPin size={18} className="text-primary" /> กรุงเทพมหานคร
                 </li>
               </ul>
             </div>
+            {/* LINE Official — ยังไม่เปิดใช้
             <div className="rounded-2xl border border-border/50 bg-white p-6">
               <h3 className="font-semibold text-foreground">LINE Official</h3>
               <p className="mt-2 text-sm text-muted">แอดไลน์ @mhorkub เพื่อสอบถามหรือขอความช่วยเหลือ</p>
@@ -137,6 +137,7 @@ export default function ContactPage() {
                 <p className="text-lg font-bold text-primary">@mhorkub</p>
               </div>
             </div>
+            */}
           </div>
         </div>
 
@@ -161,6 +162,17 @@ export default function ContactPage() {
             ))}
           </div>
         </section>
+
+        <div className="mx-auto mt-16 max-w-2xl rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 p-10 text-center">
+          <h3 className="text-2xl font-bold text-foreground">พร้อมลองใช้ MhorKub แล้วหรือยัง?</h3>
+          <p className="mt-3 text-muted">เริ่มต้นใช้งานง่ายๆ ไม่ต้องใส่บัตรเครดิต</p>
+          <a
+            href="/register"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-dark hover:shadow-xl"
+          >
+            ทดลองฟรี 14 วัน
+          </a>
+        </div>
       </div>
     </div>
   );

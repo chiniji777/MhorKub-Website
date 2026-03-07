@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Menu,
   X,
@@ -38,6 +38,7 @@ export function Header() {
   const [isAdmin, setIsAdmin] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -153,9 +154,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-white/80 backdrop-blur-lg">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex flex-col items-center gap-0.5 py-1">
-          <Image src="/logo.png" alt="MhorKub" width={112} height={112} sizes="(max-width: 767px) 48px, 112px" className="rounded-lg w-12 h-12 md:w-28 md:h-28" />
-          <span className="text-[10px] md:text-xs font-bold leading-none text-foreground">
+        <Link href="/" className="flex items-center gap-2 py-1">
+          <Image src="/logo.png" alt="MhorKub" width={40} height={40} sizes="(max-width: 767px) 32px, 40px" className="rounded-lg w-8 h-8 md:w-10 md:h-10" />
+          <span className="text-lg md:text-xl font-bold leading-none text-foreground">
             Mhor<span className="text-primary">Kub</span>
           </span>
         </Link>
@@ -166,7 +167,12 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-lg px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-primary/5 hover:text-primary"
+              className={cn(
+                "rounded-lg px-3.5 py-2 text-sm font-medium transition-colors hover:bg-primary/5 hover:text-primary",
+                pathname === link.href
+                  ? "text-primary font-semibold"
+                  : "text-muted"
+              )}
             >
               {link.label}
             </Link>
@@ -334,7 +340,12 @@ export function Header() {
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="rounded-lg px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-primary/5 hover:text-primary"
+              className={cn(
+                "rounded-lg px-4 py-2.5 text-sm font-medium transition-colors hover:bg-primary/5 hover:text-primary",
+                pathname === link.href
+                  ? "text-primary font-semibold"
+                  : "text-muted"
+              )}
             >
               {link.label}
             </Link>

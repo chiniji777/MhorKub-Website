@@ -51,6 +51,12 @@ export function Pricing() {
               {tier.period && (
                 <p className="mt-1 text-xs text-muted">{tier.period}</p>
               )}
+              {tier.periodDays === 180 && (
+                <p className="mt-1 text-xs text-muted">เฉลี่ย 1,000 บาท/เดือน</p>
+              )}
+              {tier.periodDays === 365 && (
+                <p className="mt-1 text-xs text-muted">เฉลี่ย 833 บาท/เดือน</p>
+              )}
 
               <ul className="mt-6 flex-1 space-y-2.5">
                 {tier.features.map((feature) => (
@@ -75,6 +81,10 @@ export function Pricing() {
             </div>
           ))}
         </div>
+
+        <p className="text-center text-sm text-muted mt-8">
+          ยกเลิกได้ทุกเมื่อ ไม่มีค่าปรับ &bull; ไม่พอใจ คืนเงินภายใน 30 วัน
+        </p>
       </div>
     </section>
   );

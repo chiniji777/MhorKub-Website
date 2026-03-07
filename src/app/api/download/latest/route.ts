@@ -25,7 +25,7 @@ export async function GET() {
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`,
       {
         headers: { Accept: "application/vnd.github.v3+json" },
-        next: { revalidate: 300 }, // cache 5 min
+        cache: "no-store",
       }
     );
 

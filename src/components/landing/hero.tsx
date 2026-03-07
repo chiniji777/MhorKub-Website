@@ -35,7 +35,7 @@ export function Hero() {
               <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
               <Wifi size={14} />
             </div>
-            Offline-First — ใช้งานได้แม้ไม่มีเน็ต
+            เก็บข้อมูลลูกค้าอย่างปลอดภัยแบบ Offline
           </div>
 
           {/* Heading */}
