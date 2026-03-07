@@ -195,7 +195,6 @@ function UploadSlipContent() {
           ref={fileRef}
           type="file"
           accept="image/jpeg,image/png"
-          capture="environment"
           className="hidden"
           onChange={handleFileChange}
         />
@@ -219,8 +218,8 @@ function UploadSlipContent() {
             onClick={() => fileRef.current?.click()}
             className="w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-cyan-400 hover:bg-cyan-50 transition-colors mb-4"
           >
-            <div className="text-4xl mb-2">📸</div>
-            <p className="text-gray-600 font-medium">ถ่ายรูปหรือเลือกสลิป</p>
+            <div className="text-4xl mb-2">📎</div>
+            <p className="text-gray-600 font-medium">เลือกรูปสลิป</p>
             <p className="text-gray-400 text-xs mt-1">JPG/PNG ไม่เกิน 5MB</p>
           </button>
         )}
