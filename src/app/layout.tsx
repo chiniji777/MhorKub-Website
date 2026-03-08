@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, IBM_Plex_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import AnalyticsTracker from "@/components/analytics-tracker";
+import FacebookPixel from "@/components/fb-pixel";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -58,6 +59,7 @@ export default function RootLayout({
     <html lang="th" className="scroll-smooth">
       <body className={`${inter.variable} ${ibmPlexSansThai.variable} antialiased`}>
         <AnalyticsTracker />
+        <FacebookPixel />
         {children}
       </body>
     </html>
